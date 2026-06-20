@@ -34,3 +34,14 @@ frontend/node_modules/
 frontend/.next/
 frontend/out/
 
+
+# Additional ignores
+node_modules/
+.next/
+dist/
+build/
+*.tsbuildinfo
+.env
+.env.*
+*.log
+.cache/

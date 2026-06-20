@@ -21,15 +21,15 @@ import {
 } from "react-icons/hi2";
 
 const kpis = [
-  { label: "Today's Revenue", value: "$12,458", change: "+12.5%", up: true },
+  { label: "Today's Revenue", value: "₹12,458", change: "+12.5%", up: true },
   { label: "Orders", value: "284", change: "+8.2%", up: true },
-  { label: "Avg Order", value: "$43.87", change: "+3.1%", up: true },
+  { label: "Avg Order", value: "₹43.87", change: "+3.1%", up: true },
   { label: "Active Tables", value: "18/24", change: "75%", up: true },
 ];
 
 const quickActions = [
   { label: "Open POS", icon: HiOutlineShoppingBag, href: "/pos", color: "from-brand-500 to-emerald-600" },
-  { label: "Kitchen Display", icon: HiOutlineTv, href: "/kitchen", color: "from-amber-500 to-orange-600" },
+  { label: "Brew Bar", icon: HiOutlineTv, href: "/kitchen", color: "from-amber-500 to-orange-600" },
   { label: "Orders", icon: HiOutlineClipboardDocumentList, href: "/orders", color: "from-violet-500 to-purple-600" },
   { label: "Self-Order", icon: HiOutlineDevicePhoneMobile, href: "/self-order", color: "from-cyan-500 to-blue-600" },
 ];
@@ -44,7 +44,7 @@ const sidebarItems = [
   { label: "Bookings", icon: HiOutlineCalendarDays, href: "/bookings" },
   { label: "Payments", icon: HiOutlineCurrencyDollar, href: "/payments" },
   { label: "Coupons", icon: HiOutlineTicket, href: "/coupons" },
-  { label: "Kitchen", icon: HiOutlineTv, href: "/kitchen" },
+  { label: "Brew Bar", icon: HiOutlineTv, href: "/kitchen" },
   { label: "Customer Display", icon: HiOutlineDevicePhoneMobile, href: "/customer-display" },
   { label: "Self-Order", icon: HiOutlineQueueList, href: "/self-order" },
   { label: "Reports", icon: HiOutlineChartBar, href: "/reports" },
@@ -146,10 +146,10 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {[
-                    { id: "#1234", table: "T-05", items: 4, total: "$67.50", status: "Preparing" },
-                    { id: "#1233", table: "T-12", items: 2, total: "$34.00", status: "Served" },
-                    { id: "#1232", table: "T-03", items: 6, total: "$112.80", status: "Paid" },
-                    { id: "#1231", table: "T-08", items: 3, total: "$52.20", status: "New" },
+                    { id: "#1234", table: "T-05", items: 4, total: "₹67.50", status: "Brewing" },
+                    { id: "#1233", table: "T-12", items: 2, total: "₹34.00", status: "Served" },
+                    { id: "#1232", table: "T-03", items: 6, total: "₹112.80", status: "Paid" },
+                    { id: "#1231", table: "T-08", items: 3, total: "₹52.20", status: "Queued" },
                   ].map((order) => (
                     <tr key={order.id} className="text-surface-300">
                       <td className="py-3 font-medium text-white">{order.id}</td>
@@ -159,9 +159,9 @@ export default function DashboardPage() {
                       <td className="py-3">
                         <span
                           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            order.status === "New"
+                            order.status === "Queued"
                               ? "bg-blue-500/15 text-blue-400"
-                              : order.status === "Preparing"
+                              : order.status === "Brewing"
                               ? "bg-amber-500/15 text-amber-400"
                               : order.status === "Served"
                               ? "bg-violet-500/15 text-violet-400"

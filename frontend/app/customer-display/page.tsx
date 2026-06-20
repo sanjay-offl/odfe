@@ -8,10 +8,10 @@ import {
 } from "react-icons/hi2";
 
 const orderItems = [
-  { name: "Classic Burger", qty: 2, price: 12.99 },
-  { name: "Cheese Pizza", qty: 1, price: 14.99 },
-  { name: "French Fries", qty: 2, price: 5.99 },
-  { name: "Cola", qty: 3, price: 2.99 },
+  { name: "Espresso", qty: 2, price: 150 },
+  { name: "Croissant", qty: 1, price: 180 },
+  { name: "Cappuccino", qty: 2, price: 220 },
+  { name: "Blueberry Muffin", qty: 3, price: 160 },
 ];
 
 const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -59,7 +59,7 @@ export default function CustomerDisplayPage() {
                     <span className="text-lg text-surface-200">{item.name}</span>
                   </div>
                   <span className="text-lg font-semibold text-white">
-                    ${(item.price * item.qty).toFixed(2)}
+                    ₹{(item.price * item.qty).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -69,15 +69,15 @@ export default function CustomerDisplayPage() {
             <div className="mt-6 space-y-3 border-t border-white/10 pt-6">
               <div className="flex justify-between text-surface-400">
                 <span className="text-lg">Subtotal</span>
-                <span className="text-lg">${subtotal.toFixed(2)}</span>
+                <span className="text-lg">₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-surface-400">
                 <span className="text-lg">Tax (8%)</span>
-                <span className="text-lg">${tax.toFixed(2)}</span>
+                <span className="text-lg">₹{tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between border-t border-white/10 pt-3">
                 <span className="text-2xl font-bold text-white">Total</span>
-                <span className="text-2xl font-bold gradient-text">${total.toFixed(2)}</span>
+                <span className="text-2xl font-bold gradient-text">₹{total.toFixed(2)}</span>
               </div>
             </div>
           </div>

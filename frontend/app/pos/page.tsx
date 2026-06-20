@@ -16,27 +16,36 @@ import {
 } from "react-icons/hi2";
 
 const categories = [
-  { id: "all", label: "All", emoji: "🍽️" },
-  { id: "burgers", label: "Burgers", emoji: "🍔" },
-  { id: "pizza", label: "Pizza", emoji: "🍕" },
-  { id: "sides", label: "Sides", emoji: "🍟" },
-  { id: "drinks", label: "Drinks", emoji: "🥤" },
-  { id: "desserts", label: "Desserts", emoji: "🍰" },
+  { id: "all", label: "All", emoji: "☕" },
+  { id: "espresso", label: "Espresso", emoji: "☕" },
+  { id: "tea", label: "Tea", emoji: "🍵" },
+  { id: "bakery", label: "Bakery", emoji: "🥐" },
+  { id: "smoothies", label: "Smoothies", emoji: "🥤" },
+  { id: "specials", label: "Specials", emoji: "✨" },
 ];
 
 const products = [
-  { id: 1, name: "Classic Burger", price: 12.99, category: "burgers", image: "🍔" },
-  { id: 2, name: "Cheese Pizza", price: 14.99, category: "pizza", image: "🍕" },
-  { id: 3, name: "French Fries", price: 5.99, category: "sides", image: "🍟" },
-  { id: 4, name: "Cola", price: 2.99, category: "drinks", image: "🥤" },
-  { id: 5, name: "Chicken Wings", price: 9.99, category: "sides", image: "🍗" },
-  { id: 6, name: "Chocolate Cake", price: 7.99, category: "desserts", image: "🍰" },
-  { id: 7, name: "BBQ Burger", price: 14.99, category: "burgers", image: "🍔" },
-  { id: 8, name: "Pepperoni Pizza", price: 16.99, category: "pizza", image: "🍕" },
-  { id: 9, name: "Onion Rings", price: 6.99, category: "sides", image: "🧅" },
-  { id: 10, name: "Lemonade", price: 3.99, category: "drinks", image: "🍋" },
-  { id: 11, name: "Ice Cream Sundae", price: 6.99, category: "desserts", image: "🍨" },
-  { id: 12, name: "Veggie Burger", price: 11.99, category: "burgers", image: "🥬" },
+  { id: 1, name: "Espresso", price: 120, category: "espresso", image: "☕" },
+  { id: 2, name: "Latte", price: 180, category: "espresso", image: "☕" },
+  { id: 3, name: "Mocha", price: 210, category: "espresso", image: "🍫" },
+  { id: 4, name: "Americano", price: 150, category: "espresso", image: "☕" },
+  { id: 5, name: "Flat White", price: 190, category: "espresso", image: "☕" },
+  { id: 6, name: "Cold Brew", price: 200, category: "espresso", image: "🧊" },
+  { id: 7, name: "Green Tea", price: 130, category: "tea", image: "🍵" },
+  { id: 8, name: "Masala Tea", price: 100, category: "tea", image: "🫖" },
+  { id: 9, name: "Lemon Tea", price: 120, category: "tea", image: "🍋" },
+  { id: 10, name: "Matcha", price: 220, category: "tea", image: "🍵" },
+  { id: 11, name: "Croissant", price: 150, category: "bakery", image: "🥐" },
+  { id: 12, name: "Brownie", price: 160, category: "bakery", image: "🟫" },
+  { id: 13, name: "Cookies", price: 90, category: "bakery", image: "🍪" },
+  { id: 14, name: "Cheesecake", price: 220, category: "bakery", image: "🍰" },
+  { id: 15, name: "Muffins", price: 140, category: "bakery", image: "🧁" },
+  { id: 16, name: "Sandwiches", price: 180, category: "bakery", image: "🥪" },
+  { id: 17, name: "Wraps", price: 190, category: "bakery", image: "🌯" },
+  { id: 18, name: "Smoothies", price: 200, category: "smoothies", image: "🥤" },
+  { id: 19, name: "Milkshakes", price: 210, category: "smoothies", image: "🧋" },
+  { id: 20, name: "Seasonal Specials", price: 250, category: "specials", image: "✨" },
+  { id: 21, name: "Combo Offers", price: 350, category: "specials", image: "🏷️" },
 ];
 
 interface CartItem {
@@ -149,7 +158,7 @@ export default function POSPage() {
                 <span className="mb-2 text-3xl">{product.image}</span>
                 <p className="text-sm font-semibold text-white">{product.name}</p>
                 <p className="mt-1 text-sm font-bold text-brand-400">
-                  ${product.price.toFixed(2)}
+                  ₹{product.price.toFixed(2)}
                 </p>
               </button>
             ))}
@@ -188,7 +197,7 @@ export default function POSPage() {
                   <div className="flex-1">
                     <p className="text-sm font-medium text-white">{item.name}</p>
                     <p className="text-xs text-brand-400">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      ₹{(item.price * item.quantity).toFixed(2)}
                     </p>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -225,23 +234,44 @@ export default function POSPage() {
           <div className="space-y-2 text-sm">
             <div className="flex justify-between text-surface-400">
               <span>Subtotal</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-surface-400">
               <span>Tax (8%)</span>
-              <span>${tax.toFixed(2)}</span>
+              <span>₹{tax.toFixed(2)}</span>
             </div>
             <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-bold text-white">
               <span>Total</span>
-              <span className="gradient-text">${total.toFixed(2)}</span>
+              <span className="gradient-text">₹{total.toFixed(2)}</span>
             </div>
           </div>
-          <button
-            disabled={cart.length === 0}
-            className="btn-primary mt-4 w-full"
-          >
-            Proceed to Payment
-          </button>
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button
+              disabled={cart.length === 0}
+              className="btn-primary w-full py-2 px-0 text-sm flex items-center justify-center gap-2"
+            >
+              Send to Brew Bar
+            </button>
+            <button
+              disabled={cart.length === 0}
+              className="btn-secondary w-full py-2 px-0 text-sm"
+            >
+              Hold
+            </button>
+            <button
+              disabled={cart.length === 0}
+              className="btn-secondary w-full py-2 px-0 text-sm"
+            >
+              Print
+            </button>
+            <button
+              disabled={cart.length === 0}
+              className="btn-secondary w-full py-2 px-0 text-sm !bg-red-500/10 !text-red-400 !border-red-500/20 hover:!bg-red-500/20"
+              onClick={() => setCart([])}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
 
@@ -296,7 +326,7 @@ export default function POSPage() {
             disabled={cart.length === 0}
             className="btn-primary w-full text-base"
           >
-            Complete Sale — ${total.toFixed(2)}
+            Complete Sale — ₹{total.toFixed(2)}
           </button>
         </div>
       </div>

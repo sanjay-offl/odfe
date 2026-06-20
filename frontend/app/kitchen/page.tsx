@@ -25,28 +25,28 @@ interface Ticket {
 
 const columns = {
   new: [
-    { id: "#1245", table: "T-01", server: "Alex", items: [{ name: "Classic Burger", qty: 2 }, { name: "Cola", qty: 2 }, { name: "French Fries", qty: 1 }], time: "2 min ago", elapsed: "2m" },
-    { id: "#1246", table: "T-09", server: "Maria", items: [{ name: "Cheese Pizza", qty: 1 }, { name: "Lemonade", qty: 2 }], time: "30s ago", elapsed: "0m" },
+    { id: "#1245", table: "T-01", server: "Alex", items: [{ name: "Espresso", qty: 2 }, { name: "Croissant", qty: 2 }, { name: "Cold Brew", qty: 1 }], time: "2 min ago", elapsed: "2m" },
+    { id: "#1246", table: "T-09", server: "Maria", items: [{ name: "Latte", qty: 1 }, { name: "Lemon Tea", qty: 2 }], time: "30s ago", elapsed: "0m" },
   ],
   preparing: [
-    { id: "#1244", table: "T-12", server: "Maria", items: [{ name: "BBQ Burger", qty: 1 }, { name: "Chicken Wings", qty: 2 }, { name: "Onion Rings", qty: 1 }], time: "8 min ago", elapsed: "8m" },
-    { id: "#1243", table: "T-05", server: "Alex", items: [{ name: "Pepperoni Pizza", qty: 2 }, { name: "Cola", qty: 4 }, { name: "Ice Cream Sundae", qty: 2 }], time: "12 min ago", elapsed: "12m" },
-    { id: "#1247", table: "T-02", server: "John", items: [{ name: "Veggie Burger", qty: 1 }, { name: "Caesar Salad", qty: 1 }], time: "5 min ago", elapsed: "5m" },
+    { id: "#1244", table: "T-12", server: "Maria", items: [{ name: "Mocha", qty: 1 }, { name: "Brownie", qty: 2 }, { name: "Cookies", qty: 1 }], time: "8 min ago", elapsed: "8m" },
+    { id: "#1243", table: "T-05", server: "Alex", items: [{ name: "Americano", qty: 2 }, { name: "Cheesecake", qty: 4 }, { name: "Flat White", qty: 2 }], time: "12 min ago", elapsed: "12m" },
+    { id: "#1247", table: "T-02", server: "John", items: [{ name: "Green Tea", qty: 1 }, { name: "Sandwiches", qty: 1 }], time: "5 min ago", elapsed: "5m" },
   ],
   ready: [
-    { id: "#1242", table: "T-08", server: "John", items: [{ name: "Classic Burger", qty: 1 }, { name: "French Fries", qty: 1 }], time: "15 min ago", elapsed: "15m" },
+    { id: "#1242", table: "T-08", server: "John", items: [{ name: "Espresso", qty: 1 }, { name: "Muffins", qty: 1 }], time: "15 min ago", elapsed: "15m" },
   ],
   done: [
-    { id: "#1241", table: "T-03", server: "Maria", items: [{ name: "Cheese Pizza", qty: 2 }, { name: "Milkshake", qty: 2 }], time: "20 min ago", elapsed: "20m" },
-    { id: "#1240", table: "T-15", server: "Alex", items: [{ name: "BBQ Burger", qty: 3 }, { name: "Chicken Wings", qty: 3 }], time: "25 min ago", elapsed: "25m" },
+    { id: "#1241", table: "T-03", server: "Maria", items: [{ name: "Latte", qty: 2 }, { name: "Smoothies", qty: 2 }], time: "20 min ago", elapsed: "20m" },
+    { id: "#1240", table: "T-15", server: "Alex", items: [{ name: "Flat White", qty: 3 }, { name: "Wraps", qty: 3 }], time: "25 min ago", elapsed: "25m" },
   ],
 };
 
 const columnConfig = {
-  new: { label: "New Orders", color: "border-blue-500/30", headerColor: "text-blue-400", dotColor: "bg-blue-400" },
-  preparing: { label: "Preparing", color: "border-amber-500/30", headerColor: "text-amber-400", dotColor: "bg-amber-400" },
+  new: { label: "Queued", color: "border-blue-500/30", headerColor: "text-blue-400", dotColor: "bg-blue-400" },
+  preparing: { label: "Brewing", color: "border-amber-500/30", headerColor: "text-amber-400", dotColor: "bg-amber-400" },
   ready: { label: "Ready", color: "border-emerald-500/30", headerColor: "text-emerald-400", dotColor: "bg-emerald-400" },
-  done: { label: "Done", color: "border-surface-500/30", headerColor: "text-surface-400", dotColor: "bg-surface-400" },
+  done: { label: "Served", color: "border-surface-500/30", headerColor: "text-surface-400", dotColor: "bg-surface-400" },
 };
 
 function TicketCard({ ticket }: { ticket: Ticket }) {
@@ -92,15 +92,15 @@ export default function KitchenPage() {
         </Link>
         <div className="flex items-center gap-2">
           <HiOutlineTv className="h-5 w-5 text-brand-400" />
-          <h1 className="text-lg font-bold text-white">Kitchen Display</h1>
+          <h1 className="text-lg font-bold text-white">Brew Bar</h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-lg bg-blue-500/15 px-3 py-1.5 text-xs font-medium text-blue-400">
             <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
-            {columns.new.length} New
+            {columns.new.length} Queued
           </span>
           <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-400">
-            {columns.preparing.length} Preparing
+            {columns.preparing.length} Brewing
           </span>
         </div>
       </header>

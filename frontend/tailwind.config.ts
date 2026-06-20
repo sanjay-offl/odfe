@@ -10,40 +10,47 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: "#edfcf5",
-          100: "#d3f8e6",
-          200: "#aaf0d1",
-          300: "#73e2b5",
-          400: "#3acd94",
-          500: "#16b37d",
-          600: "#0a9165",
-          700: "#087453",
-          800: "#095c44",
-          900: "#084c39",
-          950: "#032b20",
+          50: "#fdf8f4",
+          100: "#f6f0ea", // Cream
+          200: "#e8d8cd",
+          300: "#d3b8a6",
+          400: "#d6a95f", // Gold
+          500: "#4a2c2a", // Coffee Brown
+          600: "#3b241b", // Espresso
+          700: "#2a1811",
+          800: "#1e100c",
+          900: "#130907",
+          950: "#08131a", // Background
         },
         surface: {
-          50: "#f8fafc",
-          100: "#f1f5f9",
-          200: "#e2e8f0",
-          300: "#cbd5e1",
-          400: "#94a3b8",
-          500: "#64748b",
-          600: "#475569",
-          700: "#334155",
-          800: "#1e293b",
-          900: "#0f172a",
-          950: "#020617",
+          50: "#f1f5f9",
+          100: "#e2e8f0",
+          200: "#cbd5e1",
+          300: "#94a3b8",
+          400: "#64748b",
+          500: "#475569",
+          600: "#334155",
+          700: "#1e293b",
+          800: "#0f172a",
+          900: "#08131a", // Background
+          950: "#04090d",
         },
+        accent: {
+          blue: "#2cc8ff",
+          green: "#32d26b",
+          gold: "#d6a95f",
+          danger: "#ef4444",
+        }
       },
       fontFamily: {
-        sans: ["Manrope", "system-ui", "sans-serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
         display: ["Manrope", "system-ui", "sans-serif"],
+        mono: ["'IBM Plex Mono'", "monospace"],
       },
       borderRadius: {
         "2xl": "1rem",
         "3xl": "1.5rem",
-        "4xl": "2rem",
+        "4xl": "1.375rem", // 22px
       },
       backdropBlur: {
         xs: "2px",
@@ -57,15 +64,15 @@ const config: Config = {
           "0 20px 60px -15px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)",
         "premium-sm":
           "0 10px 30px -10px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.05)",
-        glow: "0 0 40px rgba(22, 179, 125, 0.3)",
-        "glow-lg": "0 0 80px rgba(22, 179, 125, 0.4)",
+        glow: "0 0 40px rgba(214, 169, 95, 0.15)", // Gold glow
+        "glow-lg": "0 0 80px rgba(214, 169, 95, 0.25)",
       },
       animation: {
-        "fade-in": "fadeIn 0.6s ease-out forwards",
-        "fade-in-up": "fadeInUp 0.6s ease-out forwards",
-        "fade-in-down": "fadeInDown 0.6s ease-out forwards",
-        "slide-in-left": "slideInLeft 0.6s ease-out forwards",
-        "slide-in-right": "slideInRight 0.6s ease-out forwards",
+        "fade-in": "fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in-up": "fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "fade-in-down": "fadeInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "slide-in-left": "slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "slide-in-right": "slideInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards",
         float: "float 6s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         shimmer: "shimmer 2s linear infinite",
@@ -94,7 +101,7 @@ const config: Config = {
         },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-20px)" },
+          "50%": { transform: "translateY(-10px)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },

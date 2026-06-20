@@ -10,25 +10,25 @@ import {
 } from "react-icons/hi2";
 
 const products = [
-  { id: 1, name: "Classic Burger", price: 12.99, category: "Burgers", stock: 48, image: "🍔" },
-  { id: 2, name: "Cheese Pizza", price: 14.99, category: "Pizza", stock: 32, image: "🍕" },
-  { id: 3, name: "French Fries", price: 5.99, category: "Sides", stock: 120, image: "🍟" },
-  { id: 4, name: "Cola", price: 2.99, category: "Drinks", stock: 200, image: "🥤" },
-  { id: 5, name: "Chicken Wings", price: 9.99, category: "Sides", stock: 36, image: "🍗" },
-  { id: 6, name: "Chocolate Cake", price: 7.99, category: "Desserts", stock: 15, image: "🍰" },
-  { id: 7, name: "BBQ Burger", price: 14.99, category: "Burgers", stock: 42, image: "🍔" },
-  { id: 8, name: "Pepperoni Pizza", price: 16.99, category: "Pizza", stock: 28, image: "🍕" },
-  { id: 9, name: "Onion Rings", price: 6.99, category: "Sides", stock: 0, image: "🧅" },
-  { id: 10, name: "Lemonade", price: 3.99, category: "Drinks", stock: 85, image: "🍋" },
-  { id: 11, name: "Ice Cream Sundae", price: 6.99, category: "Desserts", stock: 20, image: "🍨" },
-  { id: 12, name: "Veggie Burger", price: 11.99, category: "Burgers", stock: 3, image: "🥬" },
-  { id: 13, name: "Caesar Salad", price: 8.99, category: "Sides", stock: 0, image: "🥗" },
-  { id: 14, name: "Milkshake", price: 5.99, category: "Drinks", stock: 60, image: "🥛" },
-  { id: 15, name: "Tiramisu", price: 8.99, category: "Desserts", stock: 12, image: "☕" },
-  { id: 16, name: "Garlic Bread", price: 4.99, category: "Sides", stock: 55, image: "🧄" },
+  { id: 1, name: "Espresso", price: 150, category: "Espresso", stock: 48, image: "☕" },
+  { id: 2, name: "Cappuccino", price: 220, category: "Espresso", stock: 32, image: "☕" },
+  { id: 3, name: "Matcha Latte", price: 250, category: "Tea", stock: 120, image: "🍵" },
+  { id: 4, name: "Croissant", price: 180, category: "Bakery", stock: 200, image: "🥐" },
+  { id: 5, name: "Banana Smoothie", price: 280, category: "Smoothies", stock: 36, image: "🥤" },
+  { id: 6, name: "Americano", price: 160, category: "Espresso", stock: 15, image: "☕" },
+  { id: 7, name: "Chai Latte", price: 200, category: "Tea", stock: 42, image: "🍵" },
+  { id: 8, name: "Blueberry Muffin", price: 160, category: "Bakery", stock: 28, image: "🧁" },
+  { id: 9, name: "Berry Smoothie", price: 300, category: "Smoothies", stock: 0, image: "🥤" },
+  { id: 10, name: "Cold Brew", price: 180, category: "Espresso", stock: 85, image: "🧊" },
+  { id: 11, name: "Earl Grey", price: 150, category: "Tea", stock: 20, image: "☕" },
+  { id: 12, name: "Choco Cookie", price: 120, category: "Bakery", stock: 3, image: "🍪" },
+  { id: 13, name: "Mango Smoothie", price: 280, category: "Smoothies", stock: 0, image: "🥭" },
+  { id: 14, name: "Macchiato", price: 190, category: "Espresso", stock: 60, image: "☕" },
+  { id: 15, name: "Green Tea", price: 150, category: "Tea", stock: 12, image: "🍵" },
+  { id: 16, name: "Brownie", price: 160, category: "Bakery", stock: 55, image: "🟫" },
 ];
 
-const categories = ["All", "Burgers", "Pizza", "Sides", "Drinks", "Desserts"];
+const categories = ["All", "Espresso", "Tea", "Bakery", "Smoothies"];
 
 function getStockBadge(stock: number) {
   if (stock === 0)
@@ -106,7 +106,7 @@ export default function ProductsPage() {
               <h3 className="text-base font-semibold text-white">{product.name}</h3>
               <p className="mt-1 text-xs text-surface-500">{product.category}</p>
               <div className="mt-3 flex items-center justify-between">
-                <p className="text-lg font-bold text-brand-400">${product.price.toFixed(2)}</p>
+                <p className="text-lg font-bold text-brand-400">₹{product.price.toFixed(2)}</p>
                 <button className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-surface-300 transition-colors hover:bg-white/10 hover:text-white">
                   Edit
                 </button>

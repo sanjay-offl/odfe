@@ -13,27 +13,23 @@ import {
 } from "react-icons/hi2";
 
 const categories = [
-  { id: "all", label: "All", emoji: "🍽️" },
-  { id: "burgers", label: "Burgers", emoji: "🍔" },
-  { id: "pizza", label: "Pizza", emoji: "🍕" },
-  { id: "sides", label: "Sides", emoji: "🍟" },
-  { id: "drinks", label: "Drinks", emoji: "🥤" },
-  { id: "desserts", label: "Desserts", emoji: "🍰" },
+  { id: "all", label: "All", emoji: "☕" },
+  { id: "espresso", label: "Espresso", emoji: "☕" },
+  { id: "tea", label: "Tea", emoji: "🍵" },
+  { id: "bakery", label: "Bakery", emoji: "🥐" },
+  { id: "smoothies", label: "Smoothies", emoji: "🥤" },
 ];
 
 const menuItems = [
-  { id: 1, name: "Classic Burger", price: 12.99, category: "burgers", image: "🍔", desc: "Angus beef patty with lettuce, tomato" },
-  { id: 2, name: "Cheese Pizza", price: 14.99, category: "pizza", image: "🍕", desc: "Mozzarella, marinara, fresh basil" },
-  { id: 3, name: "French Fries", price: 5.99, category: "sides", image: "🍟", desc: "Crispy golden fries with seasoning" },
-  { id: 4, name: "Cola", price: 2.99, category: "drinks", image: "🥤", desc: "Ice-cold refreshing cola" },
-  { id: 5, name: "Chicken Wings", price: 9.99, category: "sides", image: "🍗", desc: "Spicy buffalo wings with ranch" },
-  { id: 6, name: "Chocolate Cake", price: 7.99, category: "desserts", image: "🍰", desc: "Rich dark chocolate layer cake" },
-  { id: 7, name: "BBQ Burger", price: 14.99, category: "burgers", image: "🍔", desc: "Smoky BBQ sauce, crispy onions" },
-  { id: 8, name: "Pepperoni Pizza", price: 16.99, category: "pizza", image: "🍕", desc: "Loaded with spicy pepperoni" },
-  { id: 9, name: "Onion Rings", price: 6.99, category: "sides", image: "🧅", desc: "Beer-battered crispy rings" },
-  { id: 10, name: "Lemonade", price: 3.99, category: "drinks", image: "🍋", desc: "Freshly squeezed lemonade" },
-  { id: 11, name: "Ice Cream Sundae", price: 6.99, category: "desserts", image: "🍨", desc: "Vanilla ice cream with toppings" },
-  { id: 12, name: "Veggie Burger", price: 11.99, category: "burgers", image: "🥬", desc: "Plant-based patty with avocado" },
+  { id: 1, name: "Espresso", price: 150, category: "espresso", image: "☕", desc: "Single origin espresso shot" },
+  { id: 2, name: "Cappuccino", price: 220, category: "espresso", image: "☕", desc: "Espresso, steamed milk, thick foam" },
+  { id: 3, name: "Matcha Latte", price: 250, category: "tea", image: "🍵", desc: "Ceremonial grade matcha with oat milk" },
+  { id: 4, name: "Croissant", price: 180, category: "bakery", image: "🥐", desc: "Butter croissant baked fresh daily" },
+  { id: 5, name: "Banana Smoothie", price: 280, category: "smoothies", image: "🥤", desc: "Banana, honey, Greek yogurt" },
+  { id: 6, name: "Americano", price: 160, category: "espresso", image: "☕", desc: "Espresso topped with hot water" },
+  { id: 7, name: "Chai Latte", price: 200, category: "tea", image: "🍵", desc: "Spiced chai blend with steamed milk" },
+  { id: 8, name: "Blueberry Muffin", price: 160, category: "bakery", image: "🧁", desc: "Blueberry muffin with streusel topping" },
+  { id: 9, name: "Berry Smoothie", price: 300, category: "smoothies", image: "🥤", desc: "Mixed berries, almond milk, chia seeds" },
 ];
 
 interface CartItem {
@@ -156,7 +152,7 @@ export default function SelfOrderPage() {
             <span className="mb-3 text-4xl">{item.image}</span>
             <h3 className="text-sm font-semibold text-white">{item.name}</h3>
             <p className="mt-1 text-xs text-surface-500">{item.desc}</p>
-            <p className="mt-2 text-base font-bold text-brand-400">${item.price.toFixed(2)}</p>
+            <p className="mt-2 text-base font-bold text-brand-400">₹{item.price.toFixed(2)}</p>
           </button>
         ))}
       </div>
@@ -180,7 +176,7 @@ export default function SelfOrderPage() {
                       <span className="text-xl">{item.image}</span>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-white">{item.name}</p>
-                        <p className="text-xs text-brand-400">${(item.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-xs text-brand-400">₹{(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => updateQuantity(item.id, -1)} className="rounded-lg bg-white/5 p-1 text-surface-400 hover:bg-white/10 hover:text-white">
@@ -203,7 +199,7 @@ export default function SelfOrderPage() {
               <div className="mt-4 border-t border-white/5 pt-4">
                 <div className="mb-4 flex justify-between text-lg font-bold text-white">
                   <span>Total</span>
-                  <span className="gradient-text">${totalPrice.toFixed(2)}</span>
+                  <span className="gradient-text">₹{totalPrice.toFixed(2)}</span>
                 </div>
                 <button className="btn-primary w-full">Place Order</button>
               </div>

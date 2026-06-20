@@ -21,8 +21,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 text-center">
           <Link href="/" className="inline-flex items-center gap-2">
-            <Logo size={40} linked={false} />
-            <span className="text-xl font-bold text-text-primary">ODFE</span>
+            <Logo size={46} showText linked={false} />
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-text-primary">Welcome Back</h1>
           <p className="mt-2 text-sm text-text-muted">

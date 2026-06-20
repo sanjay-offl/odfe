@@ -34,10 +34,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <Logo size={36} linked={false} />
-              <span className="text-lg font-bold text-text-primary">ODFE</span>
-            </Link>
+            <Logo size={42} showText linked={false} />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-text-muted">
               The premium restaurant management platform built on Odoo 19.
             </p>

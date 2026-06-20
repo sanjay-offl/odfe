@@ -16,14 +16,14 @@ interface LogoProps {
  * Both logos are preloaded via <link rel="preload"> in layout.tsx for zero-delay switching.
  */
 function LogoComponent({
-  size = 36,
+  size = 42,
   linked = true,
   className = "",
   showText = false,
 }: LogoProps) {
   const logo = (
     <div
-      className={`logo-wrapper inline-flex items-center gap-2 ${className}`}
+      className={`logo-wrapper inline-flex items-center gap-3 ${className}`}
     >
       <div
         className="logo-img-container relative shrink-0"
@@ -47,7 +47,9 @@ function LogoComponent({
         />
       </div>
       {showText && (
-        <span className="text-lg font-bold text-text-primary">ODFE</span>
+        <span className="hidden text-xl font-extrabold tracking-tight text-text-primary sm:inline">
+          ODFE
+        </span>
       )}
     </div>
   );

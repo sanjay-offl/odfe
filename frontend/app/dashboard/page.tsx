@@ -71,8 +71,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-surface-950">
       <aside className="hidden w-64 shrink-0 border-r border-border p-4 lg:block">
         <Link href="/" className="mb-8 flex items-center gap-2 px-3">
-          <Logo size={32} linked={false} />
-          <span className="text-base font-bold text-text-primary">ODFE</span>
+          <Logo size={38} showText linked={false} />
         </Link>
 
         <nav className="space-y-1">

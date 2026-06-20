@@ -71,9 +71,7 @@ body {
   background: var(--color-bg);
   color: var(--color-text-primary);
   overflow-x: hidden;
-  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
-              color 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
-              border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 150ms ease-out, color 150ms ease-out;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -102,14 +100,14 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     border-radius: 22px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
   }
 
   .glass-strong {
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: 22px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
   }
   
   .dark .glass-strong {
@@ -125,7 +123,7 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     border-radius: 22px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
   }
 
   .glass-card {
@@ -134,7 +132,7 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     border-radius: 22px;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 150ms ease-out, border-color 150ms ease-out, box-shadow 150ms ease-out;
   }
 
   .glass-card:hover {
@@ -142,6 +140,7 @@ h1, h2, h3, h4, h5, h6 {
     border-color: var(--color-brand-primary);
     transform: translateY(-4px) scale(1.01);
     box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.1), 0 0 20px rgba(214, 169, 95, 0.05);
+    transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   .dark .glass-card:hover {
@@ -160,7 +159,7 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 15px;
     border: none;
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
     box-shadow: 0 4px 14px 0 rgba(214, 169, 95, 0.39);
@@ -202,7 +201,7 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 15px;
     border: 1px solid var(--glass-border);
     cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 150ms ease-out, border-color 150ms ease-out, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .btn-secondary:hover {

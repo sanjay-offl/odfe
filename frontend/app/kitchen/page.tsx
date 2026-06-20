@@ -1,0 +1,135 @@
+"use client";
+
+import Link from "next/link";
+import {
+  HiOutlineArrowLeft,
+  HiOutlineTv,
+  HiOutlineClock,
+  HiOutlineCheckCircle,
+} from "react-icons/hi2";
+
+interface TicketItem {
+  name: string;
+  qty: number;
+  notes?: string;
+}
+
+interface Ticket {
+  id: string;
+  table: string;
+  server: string;
+  items: TicketItem[];
+  time: string;
+  elapsed: string;
+}
+
+const columns = {
+  new: [
+    { id: "#1245", table: "T-01", server: "Alex", items: [{ name: "Classic Burger", qty: 2 }, { name: "Cola", qty: 2 }, { name: "French Fries", qty: 1 }], time: "2 min ago", elapsed: "2m" },
+    { id: "#1246", table: "T-09", server: "Maria", items: [{ name: "Cheese Pizza", qty: 1 }, { name: "Lemonade", qty: 2 }], time: "30s ago", elapsed: "0m" },
+  ],
+  preparing: [
+    { id: "#1244", table: "T-12", server: "Maria", items: [{ name: "BBQ Burger", qty: 1 }, { name: "Chicken Wings", qty: 2 }, { name: "Onion Rings", qty: 1 }], time: "8 min ago", elapsed: "8m" },
+    { id: "#1243", table: "T-05", server: "Alex", items: [{ name: "Pepperoni Pizza", qty: 2 }, { name: "Cola", qty: 4 }, { name: "Ice Cream Sundae", qty: 2 }], time: "12 min ago", elapsed: "12m" },
+    { id: "#1247", table: "T-02", server: "John", items: [{ name: "Veggie Burger", qty: 1 }, { name: "Caesar Salad", qty: 1 }], time: "5 min ago", elapsed: "5m" },
+  ],
+  ready: [
+    { id: "#1242", table: "T-08", server: "John", items: [{ name: "Classic Burger", qty: 1 }, { name: "French Fries", qty: 1 }], time: "15 min ago", elapsed: "15m" },
+  ],
+  done: [
+    { id: "#1241", table: "T-03", server: "Maria", items: [{ name: "Cheese Pizza", qty: 2 }, { name: "Milkshake", qty: 2 }], time: "20 min ago", elapsed: "20m" },
+    { id: "#1240", table: "T-15", server: "Alex", items: [{ name: "BBQ Burger", qty: 3 }, { name: "Chicken Wings", qty: 3 }], time: "25 min ago", elapsed: "25m" },
+  ],
+};
+
+const columnConfig = {
+  new: { label: "New Orders", color: "border-blue-500/30", headerColor: "text-blue-400", dotColor: "bg-blue-400" },
+  preparing: { label: "Preparing", color: "border-amber-500/30", headerColor: "text-amber-400", dotColor: "bg-amber-400" },
+  ready: { label: "Ready", color: "border-emerald-500/30", headerColor: "text-emerald-400", dotColor: "bg-emerald-400" },
+  done: { label: "Done", color: "border-surface-500/30", headerColor: "text-surface-400", dotColor: "bg-surface-400" },
+};
+
+function TicketCard({ ticket }: { ticket: Ticket }) {
+  return (
+    <div className="glass-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-base font-bold text-white">{ticket.id}</span>
+        <span className="rounded-lg bg-white/10 px-2 py-0.5 text-xs font-medium text-surface-300">
+          {ticket.table}
+        </span>
+      </div>
+      <p className="mb-2 text-xs text-surface-500">Server: {ticket.server}</p>
+      <div className="space-y-1.5">
+        {ticket.items.map((item, i) => (
+          <div key={i} className="flex items-center justify-between text-sm">
+            <span className="text-surface-300">{item.name}</span>
+            <span className="font-medium text-white">×{item.qty}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
+        <span className="flex items-center gap-1 text-xs text-surface-500">
+          <HiOutlineClock className="h-3 w-3" />
+          {ticket.elapsed}
+        </span>
+        <button className="rounded-lg bg-white/5 px-3 py-1 text-xs font-medium text-surface-300 transition-colors hover:bg-white/10 hover:text-white">
+          Advance
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function KitchenPage() {
+  return (
+    <div className="min-h-screen bg-surface-950">
+      <header className="flex items-center gap-4 border-b border-white/5 px-6 py-4">
+        <Link
+          href="/dashboard"
+          className="rounded-xl p-2 text-surface-400 transition-colors hover:bg-white/5 hover:text-white"
+        >
+          <HiOutlineArrowLeft className="h-5 w-5" />
+        </Link>
+        <div className="flex items-center gap-2">
+          <HiOutlineTv className="h-5 w-5 text-brand-400" />
+          <h1 className="text-lg font-bold text-white">Kitchen Display</h1>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-lg bg-blue-500/15 px-3 py-1.5 text-xs font-medium text-blue-400">
+            <span className="h-2 w-2 rounded-full bg-blue-400 animate-pulse" />
+            {columns.new.length} New
+          </span>
+          <span className="flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-3 py-1.5 text-xs font-medium text-amber-400">
+            {columns.preparing.length} Preparing
+          </span>
+        </div>
+      </header>
+
+      <div className="p-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {(Object.keys(columns) as Array<keyof typeof columns>).map((colKey) => {
+            const cfg = columnConfig[colKey];
+            return (
+              <div key={colKey}>
+                <div className="mb-4 flex items-center gap-2">
+                  <span className={`h-2.5 w-2.5 rounded-full ${cfg.dotColor}`} />
+                  <h2 className={`text-sm font-semibold ${cfg.headerColor}`}>
+                    {cfg.label}
+                  </h2>
+                  <span className="ml-auto rounded-full bg-white/5 px-2 py-0.5 text-xs text-surface-500">
+                    {columns[colKey].length}
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {columns[colKey].map((ticket) => (
+                    <TicketCard key={ticket.id} ticket={ticket} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}

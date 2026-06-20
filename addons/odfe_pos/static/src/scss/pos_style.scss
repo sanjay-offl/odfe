@@ -1,952 +1,711 @@
-// ODFE POS Design System
-$deep-forest: #05363A;
-$accent-green: #32D26B;
-$warm-gold: #D4A843;
-$soft-cream: #F5F0E8;
-$charcoal: #1A1A2E;
-$slate: #2D2D44;
-$error-red: #E74C3C;
-$warning-orange: #F39C12;
-$info-blue: #3498DB;
-$text-primary: #FFFFFF;
-$text-secondary: #B0B0C0;
-$glass-bg: rgba(255, 255, 255, 0.05);
-$glass-border: rgba(255, 255, 255, 0.1);
-$glass-hover: rgba(255, 255, 255, 0.1);
-$shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+// ============================================================
+// ODFE POS — Complete Premium Redesign
+// Three-Column Layout | Glass System | Touch Friendly
+// ============================================================
 
-@mixin glass {
-    background: $glass-bg;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid $glass-border;
-}
+@import '../../odfe_base/static/src/scss/variables';
+@import '../../odfe_base/static/src/scss/mixins';
+@import '../../odfe_base/static/src/scss/animations';
 
-@mixin glow($color: $accent-green) {
-    box-shadow: 0 0 20px rgba($color, 0.3);
-}
-
-@mixin touch-btn {
-    min-height: 48px;
-    min-width: 48px;
-    padding: 12px 24px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    &:active { transform: scale(0.96); }
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, $charcoal, $deep-forest);
-    color: $text-primary;
-    min-height: 100vh;
-    overflow: hidden;
-}
-
-// Login Screen
-.pos-login-screen {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-}
-
-.pos-login-container {
-    @include glass;
-    padding: 48px;
-    border-radius: 24px;
-    width: 100%;
-    max-width: 400px;
-    text-align: center;
-}
-
-.pos-login-logo {
-    margin-bottom: 32px;
-    .fa-cutlery {
-        font-size: 64px;
-        color: $accent-green;
-        filter: drop-shadow(0 0 20px rgba($accent-green, 0.4));
-    }
-    h1 {
-        font-size: 28px;
-        margin-top: 16px;
-        background: linear-gradient(135deg, $accent-green, $warm-gold);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-}
-
-.pos-login-form {
-    text-align: left;
-}
-
-.pos-login-field {
-    margin-bottom: 20px;
-    label {
-        display: block;
-        font-size: 14px;
-        color: $text-secondary;
-        margin-bottom: 8px;
-    }
-    input {
-        width: 100%;
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid $glass-border;
-        border-radius: 12px;
-        color: $text-primary;
-        font-size: 16px;
-        outline: none;
-        transition: all 0.2s;
-        &:focus {
-            border-color: $accent-green;
-            @include glow;
-        }
-        &::placeholder { color: $text-secondary; }
-    }
-}
-
-.pos-login-error {
-    color: $error-red;
-    font-size: 14px;
-    margin-bottom: 16px;
-}
-
-// Navbar
-.pos-navbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 24px;
-    @include glass;
-    margin: 8px;
-    border-radius: 16px;
-    position: relative;
-    z-index: 100;
-}
-
-.pos-navbar-left,
-.pos-navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.pos-navbar-title {
-    font-size: 20px;
-    font-weight: 700;
-    background: linear-gradient(135deg, $accent-green, $warm-gold);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.pos-nav-btn {
-    @include touch-btn;
-    background: transparent;
-    color: $text-primary;
-    padding: 10px 16px;
-    border-radius: 10px;
-    &:hover { background: $glass-hover; }
-    .pos-badge {
-        background: $error-red;
-        color: white;
-        font-size: 12px;
-        padding: 2px 8px;
-        border-radius: 10px;
-        margin-left: 4px;
-    }
-}
-
-// Main Layout
-.pos-main-layout {
-    display: flex;
-    height: calc(100vh - 80px);
-    padding: 0 8px 8px;
-    gap: 8px;
-}
-
-.pos-left-panel {
-    flex: 1;
+// ── POS App Shell ─────────────────────────────────────────────
+.odfe-pos {
+    height: 100vh;
     display: flex;
     flex-direction: column;
-    gap: 8px;
     overflow: hidden;
-}
-
-.pos-right-panel {
-    width: 380px;
-    display: flex;
-    flex-direction: column;
-}
-
-// Category Tabs
-.pos-category-tabs {
-    display: flex;
-    gap: 8px;
-    padding: 8px;
-    overflow-x: auto;
-    @include glass;
-    border-radius: 12px;
-}
-
-.pos-category-tab {
-    @include touch-btn;
-    background: transparent;
-    color: $text-secondary;
-    white-space: nowrap;
-    padding: 10px 20px;
-    border-radius: 10px;
-    &.active {
-        background: $accent-green;
-        color: $charcoal;
-    }
-    &:hover:not(.active) { background: $glass-hover; }
-}
-
-// Search Bar
-.pos-search-bar {
+    background: linear-gradient(180deg, #08131A 0%, #0F2027 50%, #132D35 100%);
     position: relative;
-    margin: 8px 0;
-    input {
-        width: 100%;
-        padding: 14px 16px 14px 44px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid $glass-border;
-        border-radius: 12px;
-        color: $text-primary;
-        font-size: 16px;
-        outline: none;
-        &:focus { border-color: $accent-green; }
-        &::placeholder { color: $text-secondary; }
+
+    &::before {
+        content: '';
+        position: fixed; inset: 0;
+        z-index: 0; pointer-events: none;
+        background:
+            radial-gradient(ellipse 500px 500px at 10% 20%, rgba(15,118,110,0.10) 0%, transparent 65%),
+            radial-gradient(ellipse 400px 400px at 80% 70%, rgba(111,78,55,0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 600px 400px at 50% 50%, rgba(212,163,115,0.05) 0%, transparent 50%);
     }
 }
 
-.pos-search-icon {
-    position: absolute;
-    left: 16px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: $text-secondary;
-}
-
-.pos-search-clear {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    color: $text-secondary;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-// Product Grid
-.pos-product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-    padding: 8px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.pos-product-card {
-    @include glass;
-    border-radius: 16px;
-    padding: 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-    text-align: center;
-    &:hover {
-        transform: translateY(-2px);
-        @include glow;
-        background: $glass-hover;
-    }
-}
-
-.pos-product-image {
-    width: 100%;
-    height: 120px;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-}
-
-.pos-product-name {
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.pos-product-code {
-    font-size: 12px;
-    color: $text-secondary;
-    margin-bottom: 8px;
-}
-
-.pos-product-price {
-    font-size: 18px;
-    font-weight: 700;
-    color: $accent-green;
-}
-
-// Cart
-.pos-cart {
-    @include glass;
-    border-radius: 16px;
-    padding: 16px;
+.odfe-pos-content {
+    position: relative;
+    z-index: 1;
     display: flex;
     flex-direction: column;
     height: 100%;
 }
 
-.pos-cart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    h3 { font-size: 18px; }
+// ── POS Navbar ────────────────────────────────────────────────
+.odfe-pos-nav {
+    @include glass(16px);
+    @include flex-between;
+    padding: var(--odfe-space-3) var(--odfe-space-5);
+    border-bottom: 1px solid var(--odfe-glass-border);
+    flex-shrink: 0;
+
+    &__brand {
+        display: flex; align-items: center; gap: var(--odfe-space-3);
+
+        &-icon {
+            width: 36px; height: 36px;
+            border-radius: var(--odfe-radius-md);
+            background: linear-gradient(135deg, var(--odfe-primary), var(--odfe-accent));
+            @include flex-center;
+            color: white; font-weight: 800; font-size: 14px;
+        }
+
+        &-name {
+            font-family: var(--odfe-font-heading);
+            font-size: var(--odfe-text-lg);
+            font-weight: 800;
+            @include gradient-text(#0F766E, #22C55E);
+        }
+    }
+
+    &__center {
+        display: flex; align-items: center; gap: var(--odfe-space-3);
+    }
+
+    &__info {
+        @include glass(10px);
+        padding: var(--odfe-space-2) var(--odfe-space-4);
+        border-radius: var(--odfe-radius-full);
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-text-secondary);
+        display: flex; align-items: center; gap: var(--odfe-space-2);
+
+        strong { color: var(--odfe-text-primary); font-weight: 600; }
+    }
+
+    &__actions {
+        display: flex; gap: var(--odfe-space-2);
+    }
+
+    &__btn {
+        @include button-base;
+        background: transparent;
+        color: var(--odfe-text-secondary);
+        padding: var(--odfe-space-2) var(--odfe-space-3);
+        border-radius: var(--odfe-radius-md);
+        min-height: 40px; font-size: var(--odfe-text-sm);
+        position: relative;
+
+        &:hover { background: var(--odfe-glass-bg); color: var(--odfe-text-primary); }
+
+        &-badge {
+            position: absolute;
+            top: 2px; right: 2px;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            background: var(--odfe-danger);
+            color: white;
+            font-size: 10px;
+            @include flex-center;
+            font-weight: 700;
+        }
+    }
 }
 
-.pos-cart-items {
+// ── POS Three-Column Layout ───────────────────────────────────
+.odfe-pos-layout {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: var(--odfe-space-2);
+    padding: var(--odfe-space-2);
+    overflow: hidden;
+
+    @include mobile {
+        grid-template-columns: 1fr;
+    }
+}
+
+// ── LEFT: Products Panel ──────────────────────────────────────
+.odfe-pos-products {
+    @include flex-col;
+    gap: var(--odfe-space-2);
+    overflow: hidden;
+}
+
+// Category Pills
+.odfe-pos-categories {
+    @include glass(12px);
+    border-radius: var(--odfe-radius-lg);
+    padding: var(--odfe-space-2);
+    display: flex;
+    gap: var(--odfe-space-1);
+    overflow-x: auto;
+    flex-shrink: 0;
+    @include custom-scrollbar(3px);
+
+    &__pill {
+        @include button-base;
+        background: transparent;
+        color: var(--odfe-text-secondary);
+        padding: var(--odfe-space-2) var(--odfe-space-5);
+        border-radius: var(--odfe-radius-md);
+        font-size: var(--odfe-text-sm);
+        white-space: nowrap;
+        min-height: 38px;
+
+        &.active {
+            background: var(--odfe-primary);
+            color: white;
+        }
+
+        &:hover:not(.active) {
+            background: var(--odfe-glass-bg);
+            color: var(--odfe-text-primary);
+        }
+    }
+}
+
+// Search Bar
+.odfe-pos-search {
+    position: relative;
+    flex-shrink: 0;
+
+    &__icon {
+        position: absolute;
+        left: var(--odfe-space-4);
+        top: 50%; transform: translateY(-50%);
+        color: var(--odfe-text-tertiary);
+        pointer-events: none;
+    }
+
+    &__input {
+        @include input-field;
+        height: 44px;
+        padding-left: 40px;
+        border-radius: var(--odfe-radius-lg);
+    }
+
+    &__clear {
+        position: absolute;
+        right: var(--odfe-space-3);
+        top: 50%; transform: translateY(-50%);
+        background: none; border: none;
+        color: var(--odfe-text-tertiary);
+        cursor: pointer;
+        &:hover { color: var(--odfe-text-primary); }
+    }
+}
+
+// Product Grid
+.odfe-pos-grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--odfe-space-3);
+    overflow-y: auto;
+    padding: var(--odfe-space-1);
+    @include custom-scrollbar;
+    align-content: start;
+
+    @include wide {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+}
+
+// Product Card
+.odfe-product {
+    @include glass-card;
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+
+    &__image {
+        width: 100%; height: 110px;
+        overflow: hidden;
+        background: rgba(255,255,255,0.03);
+        position: relative;
+
+        img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            transition: transform var(--odfe-transition-base);
+        }
+
+        &-placeholder {
+            @include flex-center;
+            width: 100%; height: 100%;
+            font-size: 36px;
+            color: var(--odfe-text-muted);
+            opacity: 0.3;
+        }
+    }
+
+    &:hover &__image img {
+        transform: scale(1.05);
+    }
+
+    &__body {
+        padding: var(--odfe-space-3) var(--odfe-space-4) var(--odfe-space-4);
+    }
+
+    &__name {
+        font-size: var(--odfe-text-sm);
+        font-weight: 600;
+        @include truncate;
+        margin-bottom: 2px;
+    }
+
+    &__category {
+        font-size: var(--odfe-text-xs);
+        color: var(--odfe-text-tertiary);
+        margin-bottom: var(--odfe-space-2);
+    }
+
+    &__price {
+        @include mono-number;
+        font-size: var(--odfe-text-lg);
+        font-weight: 700;
+        color: var(--odfe-accent);
+    }
+
+    &__badge {
+        position: absolute;
+        top: var(--odfe-space-2); right: var(--odfe-space-2);
+        @include badge(rgba(0,0,0,0.6), white);
+        backdrop-filter: blur(8px);
+    }
+}
+
+// ── RIGHT: Cart & Summary Panel ───────────────────────────────
+.odfe-pos-cart-panel {
+    @include glass-card-static;
+    @include flex-col;
+    overflow: hidden;
+    border-radius: var(--odfe-radius-xl);
+}
+
+// Cart Header
+.odfe-pos-cart-header {
+    @include flex-between;
+    padding: var(--odfe-space-5) var(--odfe-space-5) var(--odfe-space-3);
+    border-bottom: 1px solid var(--odfe-glass-border);
+
+    &__title {
+        font-size: var(--odfe-text-lg);
+        font-weight: 700;
+        display: flex; align-items: center; gap: var(--odfe-space-2);
+    }
+
+    &__count {
+        @include badge(var(--odfe-primary-light), var(--odfe-primary));
+        font-size: 11px;
+    }
+
+    &__customer {
+        display: flex; align-items: center; gap: var(--odfe-space-2);
+        @include glass(8px);
+        padding: var(--odfe-space-1) var(--odfe-space-3);
+        border-radius: var(--odfe-radius-full);
+        font-size: var(--odfe-text-xs);
+        color: var(--odfe-text-secondary);
+        cursor: pointer;
+        &:hover { @include glass-hover; }
+    }
+}
+
+// Cart Items
+.odfe-pos-cart-items {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 16px;
+    padding: var(--odfe-space-3) var(--odfe-space-4);
+    @include custom-scrollbar;
 }
 
-.pos-cart-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    margin-bottom: 8px;
-}
-
-.pos-cart-item-info {
-    flex: 1;
-}
-
-.pos-cart-item-name {
-    font-size: 14px;
-    font-weight: 500;
-}
-
-.pos-cart-item-price {
-    font-size: 14px;
-    color: $accent-green;
-}
-
-.pos-cart-item-controls {
+.odfe-cart-item {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
+    gap: var(--odfe-space-3);
+    padding: var(--odfe-space-3);
+    border-radius: var(--odfe-radius-md);
+    margin-bottom: var(--odfe-space-2);
+    transition: background var(--odfe-transition-fast);
+    animation: odfe-fadeIn 220ms ease-out;
 
-.pos-qty-btn {
-    @include touch-btn;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: $text-primary;
-    font-size: 18px;
-    &:hover { background: $glass-hover; }
-}
+    &:hover { background: rgba(255,255,255,0.04); }
 
-.pos-cart-item-qty {
-    font-size: 16px;
-    font-weight: 600;
-    min-width: 24px;
-    text-align: center;
-}
+    &__info { flex: 1; min-width: 0; }
 
-.pos-cart-item-remove {
-    @include touch-btn;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    color: $error-red;
-    &:hover { background: rgba($error-red, 0.15); }
-}
-
-.pos-cart-summary {
-    border-top: 1px solid $glass-border;
-    padding-top: 12px;
-    margin-bottom: 12px;
-}
-
-.pos-cart-summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    font-size: 14px;
-    color: $text-secondary;
-}
-
-.pos-cart-summary-total {
-    font-size: 18px;
-    font-weight: 700;
-    color: $text-primary;
-    border-top: 1px solid $glass-border;
-    padding-top: 8px;
-    margin-top: 4px;
-}
-
-// Buttons
-.pos-btn {
-    @include touch-btn;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-decoration: none;
-}
-
-.pos-btn-primary {
-    background: linear-gradient(135deg, $accent-green, darken($accent-green, 10%));
-    color: $charcoal;
-    &:hover { @include glow($accent-green); }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.pos-btn-success {
-    background: linear-gradient(135deg, $info-blue, darken($info-blue, 10%));
-    color: white;
-    &:hover { @include glow($info-blue); }
-}
-
-.pos-btn-warning {
-    background: linear-gradient(135deg, $warning-orange, darken($warning-orange, 10%));
-    color: white;
-    &:hover { @include glow($warning-orange); }
-}
-
-.pos-btn-danger {
-    background: linear-gradient(135deg, $error-red, darken($error-red, 10%));
-    color: white;
-    &:hover { @include glow($error-red); }
-}
-
-.pos-btn-info {
-    background: rgba($info-blue, 0.2);
-    color: $info-blue;
-    &:hover { background: rgba($info-blue, 0.3); }
-}
-
-.pos-btn-block { width: 100%; }
-
-.pos-btn-sm {
-    padding: 8px 16px;
-    font-size: 14px;
-    min-height: 36px;
-}
-
-.pos-btn-back {
-    background: transparent;
-    color: $text-secondary;
-    &:hover { color: $text-primary; }
-}
-
-// Table View
-.pos-table-view {
-    padding: 16px;
-}
-
-.pos-table-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-}
-
-.pos-table-card {
-    @include glass;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    &.table-status-available {
-        border-color: rgba($accent-green, 0.3);
+    &__name {
+        font-size: var(--odfe-text-sm);
+        font-weight: 600;
+        @include truncate;
     }
-    &.table-status-occupied {
-        border-color: rgba($warning-orange, 0.3);
+
+    &__price {
+        font-size: var(--odfe-text-xs);
+        color: var(--odfe-text-tertiary);
+        @include mono-number;
     }
-    &.table-status-reserved {
-        border-color: rgba($info-blue, 0.3);
+
+    &__note {
+        font-size: var(--odfe-text-xs);
+        color: var(--odfe-caramel);
+        font-style: italic;
     }
-    &.selected {
-        @include glow($accent-green);
-        border-color: $accent-green;
+
+    &__controls {
+        display: flex;
+        align-items: center;
+        gap: var(--odfe-space-2);
     }
-    &:hover {
-        transform: translateY(-2px);
+
+    &__qty-btn {
+        @include touch-target;
+        width: 30px; height: 30px;
+        min-width: 30px; min-height: 30px;
+        border-radius: var(--odfe-radius-sm);
+        @include flex-center;
+        background: rgba(255,255,255,0.08);
+        border: none;
+        color: var(--odfe-text-primary);
+        font-size: 16px;
+        transition: all var(--odfe-transition-fast);
+
+        &:hover { background: rgba(255,255,255,0.14); }
     }
-}
 
-.pos-table-number {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.pos-table-status {
-    font-size: 12px;
-    color: $text-secondary;
-    text-transform: capitalize;
-}
-
-.pos-table-capacity {
-    font-size: 12px;
-    color: $text-secondary;
-    margin-top: 8px;
-}
-
-// Payment Screen
-.pos-payment-screen {
-    @include glass;
-    border-radius: 16px;
-    padding: 24px;
-}
-
-.pos-payment-header {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    h2 { flex: 1; }
-}
-
-.pos-payment-amount {
-    font-size: 24px;
-    font-weight: 700;
-    color: $accent-green;
-}
-
-.pos-payment-methods {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 24px;
-}
-
-.pos-payment-method-card {
-    @include glass;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    &.selected {
-        @include glow($accent-green);
-        border-color: $accent-green;
-    }
-    &:hover { background: $glass-hover; }
-}
-
-.pos-payment-method-icon {
-    font-size: 32px;
-    margin-bottom: 8px;
-    .fa-money { color: $accent-green; }
-    .fa-credit-card { color: $info-blue; }
-    .fa-qrcode { color: $warm-gold; }
-    .fa-mobile { color: $text-secondary; }
-}
-
-.pos-payment-method-name {
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.pos-payment-detail {
-    margin-bottom: 24px;
-    label {
-        display: block;
-        font-size: 14px;
-        color: $text-secondary;
-        margin-bottom: 8px;
-    }
-    input {
-        width: 100%;
-        padding: 14px 16px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid $glass-border;
-        border-radius: 12px;
-        color: $text-primary;
-        font-size: 20px;
+    &__qty {
+        @include mono-number;
+        font-weight: 600;
+        font-size: var(--odfe-text-sm);
+        min-width: 24px;
         text-align: center;
-        outline: none;
-        &:focus { border-color: $accent-green; }
+    }
+
+    &__subtotal {
+        @include mono-number;
+        font-weight: 600;
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-accent);
+        min-width: 60px;
+        text-align: right;
+    }
+
+    &__remove {
+        @include touch-target;
+        width: 28px; height: 28px;
+        min-width: 28px; min-height: 28px;
+        border-radius: var(--odfe-radius-sm);
+        @include flex-center;
+        background: transparent;
+        border: none;
+        color: var(--odfe-text-muted);
+        font-size: 14px;
+        cursor: pointer;
+        &:hover { background: var(--odfe-danger-light); color: var(--odfe-danger); }
     }
 }
 
-.pos-payment-remaining {
-    text-align: center;
-    font-size: 16px;
-    color: $text-secondary;
-    margin: 12px 0;
+// Cart Summary
+.odfe-pos-summary {
+    padding: var(--odfe-space-4) var(--odfe-space-5);
+    border-top: 1px solid var(--odfe-glass-border);
+    background: rgba(0,0,0,0.15);
+
+    &__row {
+        @include flex-between;
+        padding: var(--odfe-space-1) 0;
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-text-secondary);
+
+        &-value {
+            @include mono-number;
+            font-weight: 500;
+        }
+    }
+
+    &__coupon {
+        @include flex-between;
+        padding: var(--odfe-space-1) 0;
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-accent);
+
+        &-value {
+            @include mono-number;
+            font-weight: 500;
+        }
+    }
+
+    &__total {
+        @include flex-between;
+        padding: var(--odfe-space-3) 0 0;
+        border-top: 1px solid var(--odfe-glass-border);
+        margin-top: var(--odfe-space-2);
+
+        &-label {
+            font-size: var(--odfe-text-md);
+            font-weight: 700;
+        }
+
+        &-value {
+            @include mono-number;
+            font-size: var(--odfe-text-2xl);
+            font-weight: 800;
+            color: var(--odfe-text-primary);
+        }
+    }
 }
 
-.pos-payment-summary {
-    margin-bottom: 16px;
-}
-
-.pos-payment-summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    font-size: 16px;
-}
-
-.pos-payment-summary-remaining {
-    color: $warning-orange;
-    font-weight: 700;
-}
-
-// Floor Popup
-.pos-popup-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(8px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.pos-popup {
-    @include glass;
-    border-radius: 24px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.pos-popup-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 24px;
-    border-bottom: 1px solid $glass-border;
-    h2 { font-size: 20px; }
-}
-
-.pos-popup-close {
-    @include touch-btn;
-    background: transparent;
-    color: $text-secondary;
-    font-size: 24px;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    &:hover { background: $glass-hover; }
-}
-
-.pos-popup-body {
-    padding: 24px;
-}
-
-.floor-grid {
+// ── Payment Buttons Row ───────────────────────────────────────
+.odfe-pos-payment-row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--odfe-space-2);
+    padding: var(--odfe-space-3) var(--odfe-space-5);
 }
 
-.floor-card {
-    @include glass;
-    border-radius: 16px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    &:hover {
-        @include glow;
-        transform: translateY(-2px);
+.odfe-pay-btn {
+    @include button-base;
+    @include flex-col;
+    gap: 2px;
+    padding: var(--odfe-space-3);
+    border-radius: var(--odfe-radius-md);
+    font-size: var(--odfe-text-xs);
+    min-height: 52px;
+
+    &--cash {
+        background: var(--odfe-accent-light);
+        color: var(--odfe-accent);
+        &:hover { background: rgba(34,197,94,0.2); }
     }
-}
 
-.floor-icon {
-    font-size: 32px;
-    color: $warm-gold;
-    margin-bottom: 8px;
-}
-
-.floor-name {
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.floor-tables {
-    font-size: 12px;
-    color: $text-secondary;
-}
-
-// Receipt Screen
-.pos-receipt-screen {
-    @include glass;
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 400px;
-    margin: 0 auto;
-}
-
-.pos-receipt-content {
-    font-family: 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.pos-receipt-header {
-    text-align: center;
-    margin-bottom: 16px;
-}
-
-.pos-receipt-number {
-    font-size: 12px;
-    color: $text-secondary;
-}
-
-.pos-receipt-order-info {
-    font-size: 12px;
-    color: $text-secondary;
-    margin-bottom: 8px;
-}
-
-.pos-receipt-line {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-}
-
-.pos-receipt-line-detail {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    font-size: 12px;
-}
-
-.pos-receipt-total-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-}
-
-.pos-receipt-total-final {
-    font-size: 18px;
-    font-weight: 700;
-    border-top: 1px dashed $glass-border;
-    padding-top: 8px;
-}
-
-.pos-receipt-thankyou {
-    text-align: center;
-    font-style: italic;
-    color: $text-secondary;
-    margin-top: 16px;
-}
-
-.pos-receipt-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    .pos-btn { flex: 1; }
-}
-
-// Empty State
-.pos-empty {
-    padding: 48px;
-    text-align: center;
-    p {
-        color: $text-secondary;
-        font-size: 16px;
+    &--card {
+        background: var(--odfe-info-light);
+        color: var(--odfe-info);
+        &:hover { background: rgba(56,189,248,0.2); }
     }
-}
 
-// Scrollbar Styling
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-::-webkit-scrollbar-thumb {
-    background: $glass-border;
-    border-radius: 3px;
-    &:hover { background: $text-secondary; }
-}
-
-// Animations
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideIn {
-    from { transform: translateX(100%); }
-    to { transform: translateX(0); }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-}
-
-.pos-product-card,
-.pos-table-card,
-.pos-payment-method-card {
-    animation: fadeIn 0.3s ease;
-}
-
-// Customer Screen
-.pos-customer-screen {
-    @include glass;
-    border-radius: 16px;
-    padding: 24px;
-}
-
-.pos-customer-header {
-    margin-bottom: 16px;
-    h2 { margin-bottom: 12px; }
-    input {
-        width: 100%;
-        padding: 12px 16px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid $glass-border;
-        border-radius: 10px;
-        color: $text-primary;
-        font-size: 16px;
-        outline: none;
-        &:focus { border-color: $accent-green; }
+    &--upi {
+        background: var(--odfe-gold-light);
+        color: var(--odfe-gold);
+        &:hover { background: rgba(200,155,60,0.2); }
     }
+
+    &__icon { font-size: 18px; }
 }
 
-.pos-customer-list {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.pos-customer-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    &:hover { background: $glass-hover; }
-}
-
-.pos-customer-avatar {
-    font-size: 32px;
-    color: $warm-gold;
-}
-
-.pos-customer-name {
-    font-weight: 600;
-}
-
-.pos-customer-phone,
-.pos-customer-points {
-    font-size: 12px;
-    color: $text-secondary;
-}
-
-// Reports Screen
-.pos-reports-screen {
-    padding: 24px;
-}
-
-.pos-reports-grid {
+// ── Bottom Actions ────────────────────────────────────────────
+.odfe-pos-actions {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--odfe-space-2);
+    padding: var(--odfe-space-3) var(--odfe-space-5) var(--odfe-space-4);
 }
 
-.pos-report-card {
-    @include glass;
-    border-radius: 16px;
-    padding: 24px;
+.odfe-action-btn {
+    @include button-base;
+    background: var(--odfe-glass-bg);
+    color: var(--odfe-text-secondary);
+    border: 1px solid var(--odfe-glass-border);
+    padding: var(--odfe-space-3);
+    border-radius: var(--odfe-radius-md);
+    font-size: var(--odfe-text-xs);
+    min-height: 44px;
+
+    &:hover { @include glass-hover; color: var(--odfe-text-primary); }
+
+    &--kitchen {
+        background: linear-gradient(135deg, var(--odfe-primary), var(--odfe-accent));
+        color: white;
+        border-color: transparent;
+        &:hover { @include glow; }
+    }
+}
+
+// ── Cart Empty State ──────────────────────────────────────────
+.odfe-pos-empty-cart {
+    @include flex-center;
+    @include flex-col;
+    flex: 1;
     text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
-    &:hover {
-        @include glow;
-        transform: translateY(-2px);
+    padding: var(--odfe-space-8);
+    opacity: 0.6;
+
+    &__icon {
+        font-size: 48px;
+        color: var(--odfe-text-muted);
+        margin-bottom: var(--odfe-space-4);
+    }
+
+    &__text {
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-text-tertiary);
     }
 }
 
-.pos-report-icon {
-    font-size: 36px;
-    margin-bottom: 12px;
-    color: $accent-green;
-}
-
-.pos-report-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 4px;
-}
-
-.pos-report-desc {
-    font-size: 12px;
-    color: $text-secondary;
-}
-
-// Responsive
-@media (max-width: 1024px) {
-    .pos-main-layout {
-        flex-direction: column;
+// ── Responsive ────────────────────────────────────────────────
+@include mobile {
+    .odfe-pos-layout {
+        grid-template-columns: 1fr;
     }
-    .pos-right-panel {
-        width: 100%;
-        max-height: 300px;
+
+    .odfe-pos-cart-panel {
+        max-height: 45vh;
     }
-    .pos-product-grid {
+
+    .odfe-pos-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .odfe-pos-actions {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@include tablet {
+    .odfe-pos-layout {
+        grid-template-columns: 1fr 320px;
+    }
+
+    .odfe-pos-grid {
         grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     }
 }
 
-@media (max-width: 480px) {
-    .pos-navbar { padding: 8px 12px; }
-    .pos-product-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
+// ── Login Screen ──────────────────────────────────────────────
+.odfe-login {
+    height: 100vh;
+    display: flex;
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    overflow: hidden;
+
+    &__visual {
+        flex: 1;
+        @include flex-center;
+        background: radial-gradient(circle at center, rgba(34,197,94,0.1) 0%, transparent 70%);
+        position: relative;
+
+        &-content {
+            text-align: center;
+            color: white;
+            animation: odfe-fadeInUp 0.8s ease-out;
+        }
+
+        &-icon {
+            font-size: 64px;
+            color: var(--odfe-primary);
+            margin-bottom: var(--odfe-space-4);
+        }
+
+        &-title {
+            font-size: var(--odfe-text-3xl);
+            font-family: var(--odfe-font-heading);
+            font-weight: 800;
+            margin-bottom: var(--odfe-space-2);
+        }
+
+        &-subtitle {
+            font-size: var(--odfe-text-lg);
+            color: var(--odfe-text-secondary);
+        }
+    }
+
+    &__form-side {
+        width: 480px;
+        @include flex-center;
+        padding: var(--odfe-space-8);
+        background: rgba(0,0,0,0.2);
+        backdrop-filter: blur(20px);
+        border-left: 1px solid var(--odfe-glass-border);
+
+        @include mobile {
+            width: 100%;
+            border-left: none;
+            position: absolute;
+            inset: 0;
+        }
+    }
+
+    &__card {
+        @include glass-card;
+        width: 100%;
+        max-width: 400px;
+        padding: var(--odfe-space-8) var(--odfe-space-6);
+        animation: odfe-fadeIn 0.5s ease-out;
+    }
+
+    &__logo {
+        text-align: center;
+        margin-bottom: var(--odfe-space-8);
+
+        &-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto var(--odfe-space-4);
+            border-radius: var(--odfe-radius-xl);
+            background: linear-gradient(135deg, var(--odfe-primary), var(--odfe-accent));
+            @include flex-center;
+            color: white;
+            font-size: 24px;
+            font-weight: 800;
+            box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+        }
+
+        h1 {
+            font-family: var(--odfe-font-heading);
+            font-size: var(--odfe-text-2xl);
+            font-weight: 800;
+            color: var(--odfe-text-primary);
+            margin-bottom: var(--odfe-space-2);
+        }
+
+        p {
+            color: var(--odfe-text-secondary);
+            font-size: var(--odfe-text-sm);
+        }
+    }
+
+    &__field {
+        margin-bottom: var(--odfe-space-4);
+
+        label {
+            display: block;
+            font-size: var(--odfe-text-xs);
+            font-weight: 600;
+            color: var(--odfe-text-secondary);
+            margin-bottom: var(--odfe-space-2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input {
+            @include input-field;
+            width: 100%;
+            height: 48px;
+            border-radius: var(--odfe-radius-md);
+        }
+    }
+
+    &__error {
+        color: var(--odfe-danger);
+        font-size: var(--odfe-text-sm);
+        text-align: center;
+        margin-bottom: var(--odfe-space-4);
+        padding: var(--odfe-space-3);
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: var(--odfe-radius-md);
+    }
+
+    &__submit {
+        @include button-base;
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(135deg, var(--odfe-primary), var(--odfe-accent));
+        color: white;
+        border-radius: var(--odfe-radius-md);
+        font-weight: 600;
+        font-size: var(--odfe-text-md);
+        margin-top: var(--odfe-space-4);
+        transition: all 0.3s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(20, 184, 166, 0.4);
+        }
     }
 }

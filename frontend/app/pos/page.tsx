@@ -1,0 +1,305 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import {
+  HiOutlineArrowLeft,
+  HiOutlineShoppingBag,
+  HiOutlineMagnifyingGlass,
+  HiOutlinePlus,
+  HiOutlineMinus,
+  HiOutlineTrash,
+  HiOutlineCreditCard,
+  HiOutlineCurrencyDollar,
+  HiOutlineDevicePhoneMobile,
+  HiOutlineBanknotes,
+} from "react-icons/hi2";
+
+const categories = [
+  { id: "all", label: "All", emoji: "🍽️" },
+  { id: "burgers", label: "Burgers", emoji: "🍔" },
+  { id: "pizza", label: "Pizza", emoji: "🍕" },
+  { id: "sides", label: "Sides", emoji: "🍟" },
+  { id: "drinks", label: "Drinks", emoji: "🥤" },
+  { id: "desserts", label: "Desserts", emoji: "🍰" },
+];
+
+const products = [
+  { id: 1, name: "Classic Burger", price: 12.99, category: "burgers", image: "🍔" },
+  { id: 2, name: "Cheese Pizza", price: 14.99, category: "pizza", image: "🍕" },
+  { id: 3, name: "French Fries", price: 5.99, category: "sides", image: "🍟" },
+  { id: 4, name: "Cola", price: 2.99, category: "drinks", image: "🥤" },
+  { id: 5, name: "Chicken Wings", price: 9.99, category: "sides", image: "🍗" },
+  { id: 6, name: "Chocolate Cake", price: 7.99, category: "desserts", image: "🍰" },
+  { id: 7, name: "BBQ Burger", price: 14.99, category: "burgers", image: "🍔" },
+  { id: 8, name: "Pepperoni Pizza", price: 16.99, category: "pizza", image: "🍕" },
+  { id: 9, name: "Onion Rings", price: 6.99, category: "sides", image: "🧅" },
+  { id: 10, name: "Lemonade", price: 3.99, category: "drinks", image: "🍋" },
+  { id: 11, name: "Ice Cream Sundae", price: 6.99, category: "desserts", image: "🍨" },
+  { id: 12, name: "Veggie Burger", price: 11.99, category: "burgers", image: "🥬" },
+];
+
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
+
+export default function POSPage() {
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [search, setSearch] = useState("");
+
+  const filtered = products.filter(
+    (p) =>
+      (activeCategory === "all" || p.category === activeCategory) &&
+      p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const addToCart = (product: (typeof products)[0]) => {
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
+      if (existing) {
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  };
+
+  const removeFromCart = (id: number) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setCart((prev) =>
+      prev
+        .map((item) =>
+          item.id === id ? { ...item, quantity: item.quantity + delta } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  };
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const tax = subtotal * 0.08;
+  const total = subtotal + tax;
+
+  return (
+    <div className="flex h-screen bg-surface-950 text-surface-200">
+      {/* Left Panel - Products */}
+      <div className="flex flex-1 flex-col border-r border-white/5">
+        <header className="flex items-center gap-4 border-b border-white/5 px-6 py-4">
+          <Link
+            href="/dashboard"
+            className="rounded-xl p-2 text-surface-400 transition-colors hover:bg-white/5 hover:text-white"
+          >
+            <HiOutlineArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <HiOutlineShoppingBag className="h-5 w-5 text-brand-400" />
+            <h1 className="text-lg font-bold text-white">POS</h1>
+          </div>
+        </header>
+
+        {/* Category Tabs */}
+        <div className="flex gap-2 border-b border-white/5 px-6 py-3 overflow-x-auto">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-sm font-medium transition-all ${
+                activeCategory === cat.id
+                  ? "bg-brand-500/20 text-brand-400"
+                  : "text-surface-400 hover:bg-white/5 hover:text-white"
+              }`}
+            >
+              <span>{cat.emoji}</span>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="px-6 py-3">
+          <div className="relative">
+            <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-surface-500" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-surface-500 outline-none focus:border-brand-500/50 focus:ring-1 focus:ring-brand-500/30"
+            />
+          </div>
+        </div>
+
+        {/* Product Grid */}
+        <div className="flex-1 overflow-y-auto px-6 pb-6">
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
+            {filtered.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => addToCart(product)}
+                className="glass-card flex flex-col items-center p-4 text-center hover:border-brand-500/30"
+              >
+                <span className="mb-2 text-3xl">{product.image}</span>
+                <p className="text-sm font-semibold text-white">{product.name}</p>
+                <p className="mt-1 text-sm font-bold text-brand-400">
+                  ${product.price.toFixed(2)}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Panel - Cart */}
+      <div className="flex w-[380px] flex-col border-r border-white/5">
+        <header className="border-b border-white/5 px-6 py-4">
+          <h2 className="text-base font-bold text-white">
+            Current Order
+            {cart.length > 0 && (
+              <span className="ml-2 rounded-full bg-brand-500/20 px-2 py-0.5 text-xs text-brand-400">
+                {cart.reduce((s, i) => s + i.quantity, 0)} items
+              </span>
+            )}
+          </h2>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          {cart.length === 0 ? (
+            <div className="flex h-full flex-col items-center justify-center text-surface-500">
+              <HiOutlineShoppingBag className="mb-3 h-12 w-12 opacity-30" />
+              <p className="text-sm">Cart is empty</p>
+              <p className="text-xs">Tap a product to add it</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {cart.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/5 p-3"
+                >
+                  <span className="text-xl">{item.image}</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-white">{item.name}</p>
+                    <p className="text-xs text-brand-400">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => updateQuantity(item.id, -1)}
+                      className="rounded-lg bg-white/5 p-1 text-surface-400 hover:bg-white/10 hover:text-white"
+                    >
+                      <HiOutlineMinus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-6 text-center text-sm font-medium text-white">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.id, 1)}
+                      className="rounded-lg bg-white/5 p-1 text-surface-400 hover:bg-white/10 hover:text-white"
+                    >
+                      <HiOutlinePlus className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="ml-1 rounded-lg p-1 text-red-400/60 hover:bg-red-500/10 hover:text-red-400"
+                    >
+                      <HiOutlineTrash className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Totals */}
+        <div className="border-t border-white/5 p-4">
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between text-surface-400">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-surface-400">
+              <span>Tax (8%)</span>
+              <span>${tax.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-bold text-white">
+              <span>Total</span>
+              <span className="gradient-text">${total.toFixed(2)}</span>
+            </div>
+          </div>
+          <button
+            disabled={cart.length === 0}
+            className="btn-primary mt-4 w-full"
+          >
+            Proceed to Payment
+          </button>
+        </div>
+      </div>
+
+      {/* Right Panel - Payment */}
+      <div className="flex w-[320px] flex-col bg-surface-950/50 p-6">
+        <h2 className="mb-6 text-base font-bold text-white">Payment</h2>
+
+        <div className="space-y-3">
+          <button className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-brand-500/30 hover:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/20">
+              <HiOutlineCreditCard className="h-5 w-5 text-brand-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Card</p>
+              <p className="text-xs text-surface-500">Credit / Debit</p>
+            </div>
+          </button>
+
+          <button className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-brand-500/30 hover:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
+              <HiOutlineCurrencyDollar className="h-5 w-5 text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Cash</p>
+              <p className="text-xs text-surface-500">Pay with cash</p>
+            </div>
+          </button>
+
+          <button className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-brand-500/30 hover:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/20">
+              <HiOutlineDevicePhoneMobile className="h-5 w-5 text-blue-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Mobile Pay</p>
+              <p className="text-xs text-surface-500">Apple Pay, Google Pay</p>
+            </div>
+          </button>
+
+          <button className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-left transition-all hover:border-brand-500/30 hover:bg-white/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/20">
+              <HiOutlineBanknotes className="h-5 w-5 text-violet-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-white">Split</p>
+              <p className="text-xs text-surface-500">Split payment</p>
+            </div>
+          </button>
+        </div>
+
+        <div className="mt-auto">
+          <button
+            disabled={cart.length === 0}
+            className="btn-primary w-full text-base"
+          >
+            Complete Sale — ${total.toFixed(2)}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

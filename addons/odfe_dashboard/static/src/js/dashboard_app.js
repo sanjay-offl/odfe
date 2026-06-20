@@ -2,14 +2,20 @@
     "use strict";
 
     const API_BASE = "/api/dashboard";
+    const CURRENCY = "\u20B9";
 
     function formatCurrency(amount) {
         const num = parseFloat(amount) || 0;
-        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(num);
+        return CURRENCY + num.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function formatCurrencyDecimal(amount) {
+        const num = parseFloat(amount) || 0;
+        return CURRENCY + num.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function formatNumber(num) {
-        return new Intl.NumberFormat("en-US").format(parseInt(num) || 0);
+        return new Intl.NumberFormat("en-IN").format(parseInt(num) || 0);
     }
 
     function getPeriodDates(period) {
@@ -54,43 +60,110 @@
 
         if (revenueEl) revenueEl.textContent = formatCurrency(data.total_revenue);
         if (ordersEl) ordersEl.textContent = formatNumber(data.total_orders);
-        if (avgEl) avgEl.textContent = formatCurrency(data.avg_order_value);
+        if (avgEl) avgEl.textContent = formatCurrencyDecimal(data.avg_order_value);
         if (customersEl) customersEl.textContent = formatNumber(data.total_customers);
 
         const revTrend = document.getElementById("kpi_revenue_trend");
         const ordTrend = document.getElementById("kpi_orders_trend");
         if (revTrend && data.revenue_growth !== undefined) {
             const pct = parseFloat(data.revenue_growth).toFixed(1);
-            const cls = pct >= 0 ? "text-success" : "text-danger";
+            const cls = pct >= 0 ? "odfe-kpi-card__trend--up" : "odfe-kpi-card__trend--down";
             const icon = pct >= 0 ? "fa-arrow-up" : "fa-arrow-down";
-            revTrend.innerHTML = `<span class="${cls}"><i class="fa ${icon}"></i> ${Math.abs(pct)}% vs prev period</span>`;
+            revTrend.className = `odfe-kpi-card__trend ${cls}`;
+            revTrend.innerHTML = `<i class="fa ${icon}"></i> ${Math.abs(pct)}%`;
         }
         if (ordTrend && data.order_growth !== undefined) {
             const pct = parseFloat(data.order_growth).toFixed(1);
-            const cls = pct >= 0 ? "text-success" : "text-danger";
+            const cls = pct >= 0 ? "odfe-kpi-card__trend--up" : "odfe-kpi-card__trend--down";
             const icon = pct >= 0 ? "fa-arrow-up" : "fa-arrow-down";
-            ordTrend.innerHTML = `<span class="${cls}"><i class="fa ${icon}"></i> ${Math.abs(pct)}% vs prev period</span>`;
+            ordTrend.className = `odfe-kpi-card__trend ${cls}`;
+            ordTrend.innerHTML = `<i class="fa ${icon}"></i> ${Math.abs(pct)}%`;
         }
     }
 
-    function renderTopProductsTable(products) {
-        const tbody = document.getElementById("top_products_body");
-        if (!tbody) return;
+    function renderPopularMenu(products) {
+        const container = document.getElementById("popular_menu_list");
+        if (!container) return;
         if (!products || !products.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">No data</td></tr>';
+            container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--odfe-text-tertiary);">No data</div>';
             return;
         }
-        tbody.innerHTML = products
-            .map(
-                (p, i) =>
-                    `<tr>
-                        <td>${i + 1}</td>
-                        <td>${p.product_name || "N/A"}</td>
-                        <td>${formatNumber(p.total_qty)}</td>
-                        <td>${formatCurrency(p.total_revenue)}</td>
-                    </tr>`
-            )
-            .join("");
+        const emojis = ["☕", "🍵", "🥤", "🍰", "🧁", "🥐", "🍝", "🥗", "🍕", "🥪"];
+        container.innerHTML = products.slice(0, 6).map((p, i) => `
+            <div class="odfe-popular-menu__item">
+                <div class="odfe-popular-menu__rank" ${i === 0 ? 'style="background: var(--odfe-gold-light); color: var(--odfe-gold);"' : ''}>${i + 1}</div>
+                <div class="odfe-popular-menu__image" style="display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                    ${emojis[i % emojis.length]}
+                </div>
+                <div class="odfe-popular-menu__info">
+                    <div class="odfe-popular-menu__name">${p.product_name || "N/A"}</div>
+                    <div class="odfe-popular-menu__category">${p.category || "Menu"}</div>
+                </div>
+                <div class="odfe-popular-menu__sales">${formatNumber(p.total_qty)} sold</div>
+            </div>
+        `).join("");
+    }
+
+    function renderRecentOrders(orders) {
+        const container = document.getElementById("activity_feed");
+        if (!container || !orders || !orders.length) return;
+        container.innerHTML = orders.slice(0, 5).map(o => {
+            const icon = o.state === "paid" ? "fa-check-circle" : o.state === "done" ? "fa-flag-checkered" : "fa-clock-o";
+            const color = o.state === "paid" ? "var(--odfe-success)" : "var(--odfe-text-tertiary)";
+            return `
+                <div class="odfe-timeline__item">
+                    <div class="odfe-timeline__dot" style="color: ${color};"><i class="fa ${icon}"/></div>
+                    <div class="odfe-timeline__content">
+                        <div class="odfe-timeline__text">Order <strong>#${o.name || o.id}</strong> &mdash; ${o.customer_name || "Walk-in"}</div>
+                        <div class="odfe-timeline__when">${o.time || ""} &middot; ${formatCurrency(o.amount_total || 0)}</div>
+                    </div>
+                </div>
+            `;
+        }).join("");
+    }
+
+    function renderPeakHoursGrid(hourlySales) {
+        const grid = document.getElementById("peak_hours_grid");
+        if (!grid || !hourlySales || !hourlySales.length) return;
+        grid.innerHTML = hourlySales.map(h => {
+            const rev = parseFloat(h.revenue) || 0;
+            let level = "low";
+            if (rev > 0) level = "low";
+            if (rev > 2000) level = "medium";
+            if (rev > 5000) level = "high";
+            if (rev > 10000) level = "peak";
+            return `<div class="odfe-peak-hours__cell odfe-peak-hours__cell--${level}" title="${formatCurrency(rev)}"></div>`;
+        }).join("");
+    }
+
+    function renderPaymentBreakdown(payments) {
+        const container = document.getElementById("payment_breakdown_list");
+        const bar = document.getElementById("payment_breakdown_bar");
+        if (!container) return;
+        if (!payments || !payments.length) {
+            container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--odfe-text-tertiary);">No data</div>';
+            return;
+        }
+        const total = payments.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
+        const colors = ["#22C55E", "#38BDF8", "#F59E0B", "#EF4444", "#A78BFA"];
+        container.innerHTML = payments.map((p, i) => {
+            const pct = total > 0 ? ((parseFloat(p.total) || 0) / total * 100).toFixed(1) : 0;
+            return `
+                <div class="odfe-payment-breakdown__item">
+                    <div class="odfe-payment-breakdown__item-label">
+                        <div class="odfe-payment-breakdown__item-dot" style="background: ${colors[i % colors.length]};"></div>
+                        <span>${p.method_name || "Other"}</span>
+                    </div>
+                    <div class="odfe-payment-breakdown__item-value">${formatCurrency(p.total)} <span style="color: var(--odfe-text-tertiary); font-size: 11px;">(${pct}%)</span></div>
+                </div>
+            `;
+        }).join("");
+        if (bar) {
+            bar.innerHTML = payments.map((p, i) => {
+                const pct = total > 0 ? ((parseFloat(p.total) || 0) / total * 100) : 0;
+                return `<span style="width: ${pct}%; background: ${colors[i % colors.length]};"></span>`;
+            }).join("");
+        }
     }
 
     let dailyChart = null;
@@ -98,32 +171,43 @@
     let topProductsChart = null;
     let hourlyChart = null;
 
+    const apexTheme = {
+        chart: { background: "transparent" },
+        grid: { borderColor: "rgba(255,255,255,0.04)" },
+        xaxis: { labels: { style: { colors: "#64748B", fontSize: "11px" } } },
+        yaxis: { labels: { style: { colors: "#64748B", fontSize: "11px" } } },
+        tooltip: { theme: "dark" },
+        legend: { labels: { colors: "#94A3B8" } },
+    };
+
     function renderDailySalesChart(dailySales) {
         if (!dailySales || !dailySales.length) return;
         const labels = dailySales.map((d) => {
             if (typeof d.date === "string") return d.date;
             const dt = new Date(d.date);
-            return dt.toLocaleDateString();
+            return dt.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
         });
         const revenue = dailySales.map((d) => parseFloat(d.revenue) || 0);
         const orders = dailySales.map((d) => parseInt(d.orders) || 0);
 
         const options = {
-            chart: { type: "line", height: 350, toolbar: { show: false } },
+            ...apexTheme,
+            chart: { type: "line", height: 300, toolbar: { show: false }, background: "transparent" },
             series: [
-                { name: "Revenue", type: "line", data: revenue },
+                { name: "Revenue", type: "area", data: revenue },
                 { name: "Orders", type: "bar", data: orders },
             ],
-            xaxis: { categories: labels, labels: { rotate: -45 } },
-            stroke: { width: [3, 0] },
-            colors: ["#3366ff", "#ff9933"],
-            fill: { opacity: [1, 0.85] },
+            xaxis: { categories: labels, labels: { rotate: -45, style: { colors: "#64748B", fontSize: "11px" } } },
+            stroke: { width: [2, 0], curve: "smooth" },
+            colors: ["#14B8A6", "#D4A373"],
+            fill: { type: ["gradient", "solid"], opacity: [0.15, 0.85] },
             dataLabels: { enabled: false },
             yaxis: [
-                { title: { text: "Revenue" } },
-                { opposite: true, title: { text: "Orders" } },
+                { title: { text: "Revenue", style: { color: "#64748B" } }, labels: { style: { colors: "#64748B" } } },
+                { opposite: true, title: { text: "Orders", style: { color: "#64748B" } }, labels: { style: { colors: "#64748B" } } },
             ],
-            tooltip: { shared: true, intersect: false },
+            tooltip: { shared: true, intersect: false, theme: "dark" },
+            grid: { borderColor: "rgba(255,255,255,0.04)" },
         };
         const el = document.getElementById("daily_sales_chart");
         if (!el) return;
@@ -136,19 +220,24 @@
         if (!payments || !payments.length) return;
         const labels = payments.map((p) => p.method_name);
         const data = payments.map((p) => parseFloat(p.total) || 0);
-        const colors = ["#28a745", "#007bff", "#ffc107", "#dc3545", "#17a2b8"];
+        const colors = ["#22C55E", "#38BDF8", "#F59E0B", "#EF4444", "#A78BFA"];
 
         const options = {
-            chart: { type: "pie", height: 350 },
+            ...apexTheme,
+            chart: { type: "donut", height: 300, background: "transparent" },
             labels: labels,
             series: data,
             colors: colors.slice(0, labels.length),
-            legend: { position: "bottom" },
-            tooltip: {
-                y: {
-                    formatter: (val) => formatCurrency(val),
+            legend: { position: "bottom", labels: { colors: "#94A3B8" } },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: "65%",
+                        labels: { show: false },
+                    },
                 },
             },
+            tooltip: { theme: "dark" },
         };
         const el = document.getElementById("payment_chart");
         if (!el) return;
@@ -159,24 +248,24 @@
 
     function renderTopProductsChart(products) {
         if (!products || !products.length) return;
-        const labels = products.map((p) => p.product_name);
-        const data = products.map((p) => parseFloat(p.total_revenue) || 0);
+        const labels = products.slice(0, 8).map((p) => p.product_name);
+        const data = products.slice(0, 8).map((p) => parseFloat(p.total_revenue) || 0);
 
         const options = {
-            chart: { type: "bar", height: 300, toolbar: { show: false } },
+            ...apexTheme,
+            chart: { type: "bar", height: 280, toolbar: { show: false }, background: "transparent" },
             series: [{ name: "Revenue", data: data }],
             xaxis: {
                 categories: labels,
-                labels: { rotate: -45, truncate: 15 },
+                labels: { rotate: -45, style: { colors: "#64748B", fontSize: "11px" }, truncate: 15 },
             },
             plotOptions: {
-                bar: { horizontal: false, distributed: true },
+                bar: { horizontal: true, distributed: true, borderRadius: 6, barHeight: "60%" },
             },
-            colors: ["#3366ff"],
+            colors: ["#14B8A6", "#D4A373", "#38BDF8", "#F59E0B", "#22C55E", "#EF4444", "#A78BFA", "#F472B6"],
             dataLabels: { enabled: false },
-            tooltip: {
-                y: { formatter: (val) => formatCurrency(val) },
-            },
+            tooltip: { theme: "dark" },
+            grid: { borderColor: "rgba(255,255,255,0.04)" },
         };
         const el = document.getElementById("top_products_chart");
         if (!el) return;
@@ -191,17 +280,18 @@
         const revenue = hourlySales.map((h) => parseFloat(h.revenue) || 0);
 
         const options = {
-            chart: { type: "bar", height: 300, toolbar: { show: false } },
+            ...apexTheme,
+            chart: { type: "bar", height: 280, toolbar: { show: false }, background: "transparent" },
             series: [{ name: "Revenue", data: revenue }],
-            xaxis: { categories: labels, labels: { rotate: -45 } },
+            xaxis: { categories: labels, labels: { rotate: -45, style: { colors: "#64748B", fontSize: "11px" } } },
             plotOptions: {
-                bar: { horizontal: false, distributed: false },
+                bar: { horizontal: false, distributed: false, borderRadius: 4, columnWidth: "70%" },
             },
-            colors: ["#00e396"],
+            colors: ["#14B8A6"],
+            fill: { type: "gradient", gradient: { shadeIntensity: 1, opacityFrom: 0.7, opacityTo: 0.3 } },
             dataLabels: { enabled: false },
-            tooltip: {
-                y: { formatter: (val) => formatCurrency(val) },
-            },
+            tooltip: { theme: "dark" },
+            grid: { borderColor: "rgba(255,255,255,0.04)" },
         };
         const el = document.getElementById("hourly_chart");
         if (!el) return;
@@ -218,7 +308,10 @@
         renderPaymentChart(data.payment_method_breakdown);
         renderTopProductsChart(data.top_products);
         renderHourlyChart(data.hourly_sales);
-        renderTopProductsTable(data.top_products);
+        renderPopularMenu(data.top_products);
+        renderRecentOrders(data.recent_orders);
+        renderPeakHoursGrid(data.hourly_sales);
+        renderPaymentBreakdown(data.payment_method_breakdown);
     }
 
     document.addEventListener("DOMContentLoaded", function () {

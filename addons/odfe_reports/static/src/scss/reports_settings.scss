@@ -127,10 +127,10 @@
 
         &:hover { transform: scale(1.2); z-index: 2; }
 
-        &--0 { background: rgba(15,118,110,0.05); }
-        &--1 { background: rgba(15,118,110,0.15); }
-        &--2 { background: rgba(15,118,110,0.30); }
-        &--3 { background: rgba(15,118,110,0.50); }
+        &--0 { background: rgba(50,210,107,0.05); }
+        &--1 { background: rgba(50,210,107,0.15); }
+        &--2 { background: rgba(50,210,107,0.30); }
+        &--3 { background: rgba(50,210,107,0.50); }
         &--4 { background: rgba(34,197,94,0.70); }
     }
 }
@@ -330,7 +330,7 @@
 // ── Self-Order (QR Mobile) ────────────────────────────────────
 .odfe-self-order {
     min-height: 100vh;
-    background: linear-gradient(180deg, #08131A 0%, #0F2027 50%, #132D35 100%);
+    background: linear-gradient(180deg, #071216 0%, #0D1B20 50%, #132D35 100%);
     padding-bottom: 80px; // bottom cart bar space
     position: relative;
 
@@ -338,7 +338,7 @@
         content: '';
         position: fixed; inset: 0;
         background:
-            radial-gradient(ellipse 400px 400px at 50% 20%, rgba(15,118,110,0.08) 0%, transparent 60%);
+            radial-gradient(ellipse 400px 400px at 50% 20%, rgba(50,210,107,0.08) 0%, transparent 60%);
         pointer-events: none;
     }
 
@@ -356,7 +356,7 @@
         font-family: var(--odfe-font-heading);
         font-weight: 800;
         font-size: var(--odfe-text-lg);
-        @include gradient-text(#0F766E, #22C55E);
+        @include gradient-text(#32D26B, #22C55E);
     }
 
     &__table-badge {
@@ -478,14 +478,14 @@
     @include flex-col;
     text-align: center;
     padding: var(--odfe-space-8);
-    background: linear-gradient(180deg, #08131A 0%, #0F2027 50%, #132D35 100%);
+    background: linear-gradient(180deg, #071216 0%, #0D1B20 50%, #132D35 100%);
     position: relative;
 
     &::before {
         content: '';
         position: fixed; inset: 0;
         background:
-            radial-gradient(ellipse 500px 400px at 50% 40%, rgba(15,118,110,0.08) 0%, transparent 60%);
+            radial-gradient(ellipse 500px 400px at 50% 40%, rgba(50,210,107,0.08) 0%, transparent 60%);
         pointer-events: none;
     }
 
@@ -494,7 +494,7 @@
         font-family: var(--odfe-font-heading);
         font-size: clamp(6rem, 15vw, 12rem);
         font-weight: 900;
-        @include gradient-text(#0F766E, #22C55E);
+        @include gradient-text(#32D26B, #22C55E);
         line-height: 1;
         margin-bottom: var(--odfe-space-4);
     }

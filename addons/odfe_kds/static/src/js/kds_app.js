@@ -16,11 +16,13 @@ export class KdsApp extends Component {
             filteredOrders: [],
             activeFilter: "pending",
             searchQuery: "",
+            soundEnabled: true,
             filterOptions: [
                 { label: "All", value: "all" },
-                { label: "To Cook", value: "pending" },
-                { label: "Preparing", value: "preparing" },
-                { label: "Completed", value: "completed" },
+                { label: "New", value: "pending" },
+                { label: "Brewing", value: "preparing" },
+                { label: "Ready", value: "ready" },
+                { label: "Collected", value: "completed" },
             ],
         });
 
@@ -29,8 +31,14 @@ export class KdsApp extends Component {
 
         onWillStart(() => {
             this.realtime.start((orders) => {
+                const prevCount = this.state.orders.length;
                 this.state.orders = orders;
                 this._applyFilters();
+
+                // Play sound for new orders
+                if (orders.length > prevCount && this.state.soundEnabled) {
+                    this._playNotificationSound();
+                }
             });
         });
 
@@ -57,6 +65,10 @@ export class KdsApp extends Component {
     clearSearch() {
         this.state.searchQuery = "";
         this._applyFilters();
+    }
+
+    toggleSound() {
+        this.state.soundEnabled = !this.state.soundEnabled;
     }
 
     _applyFilters() {
@@ -95,6 +107,9 @@ export class KdsApp extends Component {
 
     async completeOrder(orderId) {
         await this.realtime.completeOrder(orderId);
+        if (this.state.soundEnabled) {
+            this._playReadySound();
+        }
     }
 
     _updateClock() {
@@ -115,5 +130,21 @@ export class KdsApp extends Component {
             ).length;
             countEl.textContent = `${active} active order${active !== 1 ? "s" : ""}`;
         }
+    }
+
+    _playNotificationSound() {
+        try {
+            const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH+JkI+GfnR3gIeMj46GfnN2gIaLjo2Hf3R2gIaLjo2If3V3gIeMjo2If3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gA==");
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
+        } catch (e) {}
+    }
+
+    _playReadySound() {
+        try {
+            const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH+JkI+GfnR3gIeMj46GfnN2gIaLjo2Hf3R2gIaLjo2If3V3gIeMjo2If3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gIeMjYyHf3V3gA==");
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+        } catch (e) {}
     }
 }

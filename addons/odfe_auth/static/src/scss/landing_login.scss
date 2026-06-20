@@ -14,7 +14,7 @@
     position: relative;
 
     // Multi-layer background
-    background: linear-gradient(180deg, #08131A 0%, #0F2027 40%, #132D35 100%);
+    background: linear-gradient(180deg, #071216 0%, #0D1B20 40%, #132D35 100%);
     background-attachment: fixed;
 
     &::before {
@@ -24,10 +24,10 @@
         z-index: 0;
         pointer-events: none;
         background:
-            radial-gradient(ellipse 700px 700px at 15% 20%, rgba(15, 118, 110, 0.14) 0%, transparent 70%),
-            radial-gradient(ellipse 500px 500px at 80% 35%, rgba(111, 78, 55, 0.10) 0%, transparent 65%),
-            radial-gradient(ellipse 600px 500px at 25% 75%, rgba(212, 163, 115, 0.08) 0%, transparent 60%),
-            radial-gradient(ellipse 500px 400px at 70% 85%, rgba(15, 118, 110, 0.07) 0%, transparent 55%);
+            radial-gradient(ellipse 700px 700px at 15% 20%, rgba(50, 210, 107, 0.14) 0%, transparent 70%),
+            radial-gradient(ellipse 500px 500px at 80% 35%, rgba(122, 82, 48, 0.10) 0%, transparent 65%),
+            radial-gradient(ellipse 600px 500px at 25% 75%, rgba(214, 167, 79, 0.08) 0%, transparent 60%),
+            radial-gradient(ellipse 500px 400px at 70% 85%, rgba(50, 210, 107, 0.07) 0%, transparent 55%);
     }
 }
 
@@ -69,7 +69,7 @@
             font-family: var(--odfe-font-heading);
             font-size: var(--odfe-text-xl);
             font-weight: 800;
-            @include gradient-text(#0F766E, #22C55E);
+            @include gradient-text(#32D26B, #22C55E);
         }
     }
 
@@ -111,7 +111,7 @@
         top: 30%; left: 50%;
         transform: translate(-50%, -50%);
         width: 800px; height: 600px;
-        background: radial-gradient(ellipse, rgba(15, 118, 110, 0.12) 0%, transparent 60%);
+        background: radial-gradient(ellipse, rgba(50, 210, 107, 0.12) 0%, transparent 60%);
         pointer-events: none;
     }
 
@@ -140,7 +140,7 @@
         animation: odfe-fadeInUp 500ms ease-out 100ms both;
 
         .highlight {
-            @include gradient-text(#0F766E, #22C55E);
+            @include gradient-text(#32D26B, #22C55E);
         }
     }
 
@@ -179,7 +179,7 @@
             padding: var(--odfe-space-2);
             box-shadow:
                 0 20px 60px rgba(0,0,0,0.4),
-                0 0 80px rgba(15, 118, 110, 0.08);
+                0 0 80px rgba(50, 210, 107, 0.08);
 
             img {
                 width: 100%;
@@ -318,7 +318,7 @@
 
     &--popular {
         border-color: var(--odfe-primary);
-        box-shadow: 0 0 30px rgba(15, 118, 110, 0.15);
+        box-shadow: 0 0 30px rgba(50, 210, 107, 0.15);
 
         &::before {
             content: 'Most Popular';
@@ -532,7 +532,7 @@
         position: relative;
         @include flex-center;
         overflow: hidden;
-        background: linear-gradient(135deg, #0F2027, #132D35, #0F766E);
+        background: linear-gradient(135deg, #0D1B20, #132D35, #32D26B);
 
         @include mobile { display: none; }
 
@@ -541,8 +541,8 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 400px 400px at 30% 50%, rgba(15, 118, 110, 0.2) 0%, transparent 60%),
-                radial-gradient(ellipse 300px 300px at 70% 30%, rgba(212, 163, 115, 0.1) 0%, transparent 60%);
+                radial-gradient(ellipse 400px 400px at 30% 50%, rgba(50, 210, 107, 0.2) 0%, transparent 60%),
+                radial-gradient(ellipse 300px 300px at 70% 30%, rgba(214, 167, 79, 0.1) 0%, transparent 60%);
         }
 
         &-content {
@@ -583,7 +583,7 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 400px 300px at 50% 40%, rgba(15, 118, 110, 0.06) 0%, transparent 60%);
+                radial-gradient(ellipse 400px 300px at 50% 40%, rgba(50, 210, 107, 0.06) 0%, transparent 60%);
         }
     }
 
@@ -615,7 +615,7 @@
 
         h1 {
             font-size: var(--odfe-text-2xl);
-            @include gradient-text(#0F766E, #22C55E);
+            @include gradient-text(#32D26B, #22C55E);
         }
 
         p {

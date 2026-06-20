@@ -6,5 +6,6 @@ export class ProductCard extends Component {
     static props = {
         product: { type: Object },
         onSelect: { type: Function },
+        onFavorite: { type: Function, optional: true },
     };
 }

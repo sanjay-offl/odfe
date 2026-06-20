@@ -1,6 +1,5 @@
 /** @odoo-module */
-
-import { Component, onMounted, onWillUnmount } from "@odoo/owl";
+import { Component, useState, onWillStart, onWillUnmount } from "@odoo/owl";
 
 export class TicketCard extends Component {
     static template = "odfe_kds.TicketCard";
@@ -9,41 +8,70 @@ export class TicketCard extends Component {
         onAccept: { type: Function },
         onStart: { type: Function },
         onComplete: { type: Function },
+        onCollect: { type: Function },
     };
 
     setup() {
+        this.elapsed = 0;
         this._timerInterval = null;
 
-        onMounted(() => {
+        onWillStart(() => {
             this._startTimer();
         });
 
         onWillUnmount(() => {
-            if (this._timerInterval) {
-                clearInterval(this._timerInterval);
-            }
+            this._stopTimer();
         });
     }
 
     _startTimer() {
-        if (this._timerInterval) return;
-        this._updateTimer();
-        this._timerInterval = setInterval(() => this._updateTimer(), 1000);
+        if (this.props.order.created_at) {
+            const created = new Date(this.props.order.created_at);
+            this._updateElapsed(created);
+        }
+        this._timerInterval = setInterval(() => {
+            if (this.props.order.created_at) {
+                const created = new Date(this.props.order.created_at);
+                this._updateElapsed(created);
+            }
+        }, 1000);
     }
 
-    _updateTimer() {
-        const el = this.el.querySelector(".kds-timer-value");
-        if (!el) return;
-        const created = this.props.order.created_at;
-        if (!created) {
-            el.textContent = "--:--";
-            return;
+    _stopTimer() {
+        if (this._timerInterval) {
+            clearInterval(this._timerInterval);
         }
-        const start = new Date(created).getTime();
-        const now = Date.now();
-        const diff = Math.max(0, Math.floor((now - start) / 1000));
-        const mins = Math.floor(diff / 60);
-        const secs = diff % 60;
-        el.textContent = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+    }
+
+    _updateElapsed(created) {
+        const now = new Date();
+        this.elapsed = Math.floor((now - created) / 1000);
+    }
+
+    get formattedTime() {
+        const minutes = Math.floor(this.elapsed / 60);
+        const seconds = this.elapsed % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    get timerClass() {
+        if (this.elapsed > 600) return "odfe-kds-ticket__timer--danger";
+        if (this.elapsed > 300) return "odfe-kds-ticket__timer--warning";
+        return "odfe-kds-ticket__timer--ok";
+    }
+
+    get priorityClass() {
+        const priority = this.props.order.priority;
+        if (priority === "urgent") return "odfe-kds-ticket__priority--urgent";
+        if (priority === "high") return "odfe-kds-ticket__priority--high";
+        return "odfe-kds-ticket__priority--normal";
+    }
+
+    get nextAction() {
+        const state = this.props.order.state;
+        if (state === "pending") return { label: "Accept", class: "odfe-kds-ticket__action--accept", handler: () => this.props.onAccept(this.props.order.id) };
+        if (state === "preparing") return { label: "Ready", class: "odfe-kds-ticket__action--complete", handler: () => this.props.onComplete(this.props.order.id) };
+        if (state === "ready") return { label: "Collect", class: "odfe-kds-ticket__action--collect", handler: () => this.props.onCollect(this.props.order.id) };
+        return null;
     }
 }

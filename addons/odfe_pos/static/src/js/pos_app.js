@@ -1,5 +1,5 @@
 /** @odoo-module */
-import { Component, useState } from "@odoo/owl";
+import { Component, useState, onMounted, onWillUnmount } from "@odoo/owl";
 import { LoginScreen } from "./screens/login_screen.js";
 import { FloorPopup } from "./screens/floor_popup.js";
 import { OrderView } from "./screens/order_view.js";
@@ -66,10 +66,38 @@ export class PosApp extends Component {
             selectedTable: null,
             currentFloor: null,
             products: [],
+            filteredProducts: [],
             categories: [],
             activeCategory: null,
             searchQuery: "",
+            customer: null,
+            orderType: "dine-in",
+            currentOrder: null,
+            orders: [],
+            customizationProduct: null,
+            showCustomization: false,
         });
+
+        this._keyBindings = this._handleKeyBindings.bind(this);
+        onMounted(() => {
+            document.addEventListener("keydown", this._keyBindings);
+        });
+        onWillUnmount(() => {
+            document.removeEventListener("keydown", this._keyBindings);
+        });
+    }
+
+    _handleKeyBindings(e) {
+        if (e.key === "F2") {
+            e.preventDefault();
+            this.state.searchQuery = "";
+            const searchInput = document.querySelector(".odfe-pos-search__input");
+            if (searchInput) searchInput.focus();
+        }
+        if (e.key === "Escape") {
+            this.state.showCustomization = false;
+            this.state.customizationProduct = null;
+        }
     }
 
     onLogin(sessionData) {
@@ -90,6 +118,7 @@ export class PosApp extends Component {
         const result = await ApiService.searchProducts("", null);
         if (result.success) {
             this.state.products = result.products;
+            this._applyFilters();
         }
     }
 
@@ -100,7 +129,11 @@ export class PosApp extends Component {
                 const cats = new Map();
                 result.products.forEach((p) => {
                     if (p.category_id && !cats.has(p.category_id)) {
-                        cats.set(p.category_id, { id: p.category_id, name: p.category_name });
+                        cats.set(p.category_id, {
+                            id: p.category_id,
+                            name: p.category_name,
+                            count: result.products.filter((pp) => pp.category_id === p.category_id).length,
+                        });
                     }
                 });
                 this.state.categories = Array.from(cats.values());
@@ -110,23 +143,98 @@ export class PosApp extends Component {
         }
     }
 
+    _applyFilters() {
+        let products = [...this.state.products];
+
+        if (this.state.activeCategory) {
+            products = products.filter((p) => p.category_id === this.state.activeCategory);
+        }
+
+        if (this.state.searchQuery) {
+            const q = this.state.searchQuery.toLowerCase();
+            products = products.filter(
+                (p) =>
+                    p.name.toLowerCase().includes(q) ||
+                    (p.category_name && p.category_name.toLowerCase().includes(q))
+            );
+        }
+
+        this.state.filteredProducts = products;
+    }
+
+    onSearch(query) {
+        this.state.searchQuery = query;
+        this._applyFilters();
+    }
+
+    clearSearch() {
+        this.state.searchQuery = "";
+        this._applyFilters();
+    }
+
+    selectCategory(cat) {
+        if (this.state.activeCategory === cat.id) {
+            this.state.activeCategory = null;
+        } else {
+            this.state.activeCategory = cat.id;
+        }
+        this._applyFilters();
+    }
+
     addProductToCart(product) {
         if (!this.state.session) return;
-        ApiService.cartAdd(this.state.session.session, product.id, 1, null, this.state.selectedTable?.id);
-        const existing = this.state.cart.lines.find((l) => l.product_id === product.id);
+
+        // Check if product needs customization
+        if (product.has_variants || product.is_customizable) {
+            this.state.customizationProduct = product;
+            this.state.showCustomization = true;
+            return;
+        }
+
+        this._addToCart(product, 1, null);
+    }
+
+    _addToCart(product, quantity, customization) {
+        ApiService.cartAdd(this.state.session.session, product.id, quantity, customization, this.state.selectedTable?.id);
+
+        const customKey = customization ? JSON.stringify(customization) : "";
+        const existing = this.state.cart.lines.find(
+            (l) => l.product_id === product.id && (JSON.stringify(l.customization) || "") === customKey
+        );
+
         if (existing) {
-            existing.quantity += 1;
+            existing.quantity += quantity;
         } else {
             this.state.cart.lines.push({
                 id: Date.now(),
                 product_id: product.id,
                 product_name: product.name,
-                quantity: 1,
+                image_url: product.image_url,
+                quantity: quantity,
                 price_unit: product.price,
-                subtotal: product.price,
+                subtotal: product.price * quantity,
+                customization: customization,
+                prep_time: product.prep_time,
             });
         }
         this._recalcCart();
+    }
+
+    onCustomizeConfirm(options) {
+        const product = this.state.customizationProduct;
+        if (product) {
+            const customText = Object.values(options)
+                .filter((v) => v)
+                .join(", ");
+            this._addToCart(product, 1, customText || null);
+        }
+        this.state.showCustomization = false;
+        this.state.customizationProduct = null;
+    }
+
+    onCustomizeCancel() {
+        this.state.showCustomization = false;
+        this.state.customizationProduct = null;
     }
 
     updateCartLine(lineId, quantity) {
@@ -136,6 +244,7 @@ export class PosApp extends Component {
             this.state.cart.lines = this.state.cart.lines.filter((l) => l.id !== lineId);
         } else {
             line.quantity = quantity;
+            line.subtotal = line.price_unit * quantity;
         }
         this._recalcCart();
     }
@@ -153,17 +262,20 @@ export class PosApp extends Component {
     _recalcCart() {
         const lines = this.state.cart.lines;
         this.state.cart.subtotal = lines.reduce((s, l) => s + l.price_unit * l.quantity, 0);
-        this.state.cart.total = this.state.cart.subtotal;
+        this.state.cart.total = this.state.cart.subtotal - this.state.cart.discountTotal;
     }
 
     async placeOrder() {
         if (this.state.cart.lines.length === 0) return;
         const result = await ApiService.createOrder(this.state.session.session, {
             table_id: this.state.selectedTable?.id,
+            customer_id: this.state.customer?.id,
+            order_type: this.state.orderType,
             lines: this.state.cart.lines.map((l) => ({
                 product_id: l.product_id,
                 quantity: l.quantity,
                 price_unit: l.price_unit,
+                customization: l.customization,
             })),
         });
         if (result.success) {
@@ -183,5 +295,13 @@ export class PosApp extends Component {
 
     setScreen(screen) {
         this.state.currentScreen = screen;
+    }
+
+    toggleOrderType() {
+        this.state.orderType = this.state.orderType === "dine-in" ? "takeaway" : "dine-in";
+    }
+
+    setCustomer(customer) {
+        this.state.customer = customer;
     }
 }

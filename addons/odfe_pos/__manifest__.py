@@ -23,6 +23,8 @@
         "security/pos_security.xml",
         "data/pos_data.xml",
         "views/pos_templates.xml",
+        "views/terminal_selection.xml",
+        "views/customization_drawer.xml",
         "views/session_views.xml",
         "views/order_views.xml",
         "views/order_line_views.xml",

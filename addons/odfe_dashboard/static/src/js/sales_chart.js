@@ -1,6 +1,8 @@
 (function () {
     "use strict";
 
+    const CURRENCY = "\u20B9";
+
     class SalesChart {
         constructor(el, options) {
             this.el = typeof el === "string" ? document.getElementById(el) : el;
@@ -11,7 +13,7 @@
                     type: "line",
                     height: 350,
                     width: "100%",
-                    colors: ["#3366ff", "#ff9933", "#00e396", "#ff4560"],
+                    colors: ["#14B8A6", "#D4A373", "#38BDF8", "#F59E0B"],
                     toolbar: false,
                     dataLabels: false,
                     animations: { enabled: true, dynamicAnimation: { speed: 500 } },
@@ -21,26 +23,43 @@
             this.chart = null;
         }
 
+        _baseConfig() {
+            return {
+                chart: {
+                    background: "transparent",
+                    grid: { borderColor: "rgba(255,255,255,0.04)" },
+                },
+                xaxis: { labels: { style: { colors: "#64748B", fontSize: "11px" } } },
+                yaxis: { labels: { style: { colors: "#64748B", fontSize: "11px" } } },
+                tooltip: { theme: "dark" },
+                legend: { labels: { colors: "#94A3B8" } },
+                grid: { borderColor: "rgba(255,255,255,0.04)" },
+            };
+        }
+
         render(series, labels) {
+            const base = this._baseConfig();
             const apexConfig = {
+                ...base,
                 chart: {
                     type: this.options.type,
                     height: this.options.height,
                     width: this.options.width,
                     toolbar: { show: this.options.toolbar },
                     animations: this.options.animations,
+                    background: "transparent",
                 },
                 series: series,
                 xaxis: {
                     categories: labels || [],
-                    labels: { rotate: this.options.xRotateLabels || -45 },
+                    labels: { rotate: this.options.xRotateLabels || -45, style: { colors: "#64748B", fontSize: "11px" } },
                 },
                 colors: this.options.colors,
                 dataLabels: { enabled: this.options.dataLabels },
                 stroke: { curve: "smooth", width: 2 },
                 fill: { opacity: 0.85 },
-                legend: { position: "bottom" },
-                tooltip: { shared: true, intersect: false },
+                legend: { position: "bottom", labels: { colors: "#94A3B8" } },
+                tooltip: { shared: true, intersect: false, theme: "dark" },
             };
 
             if (this.chart) this.chart.destroy();
@@ -64,12 +83,14 @@
 
         renderPie(data, labels) {
             if (this.chart) this.chart.destroy();
+            const base = this._baseConfig();
             const apexConfig = {
-                chart: { type: "pie", height: this.options.height },
+                ...base,
+                chart: { type: "pie", height: this.options.height, background: "transparent" },
                 series: data,
                 labels: labels,
                 colors: this.options.colors,
-                legend: { position: "bottom" },
+                legend: { position: "bottom", labels: { colors: "#94A3B8" } },
                 responsive: [
                     {
                         breakpoint: 480,
@@ -86,12 +107,14 @@
 
         renderDonut(data, labels) {
             if (this.chart) this.chart.destroy();
+            const base = this._baseConfig();
             const apexConfig = {
-                chart: { type: "donut", height: this.options.height },
+                ...base,
+                chart: { type: "donut", height: this.options.height, background: "transparent" },
                 series: data,
                 labels: labels,
                 colors: this.options.colors,
-                legend: { position: "bottom" },
+                legend: { position: "bottom", labels: { colors: "#94A3B8" } },
                 plotOptions: {
                     pie: {
                         donut: {
@@ -110,11 +133,13 @@
 
         renderHeatmap(series, labels) {
             if (this.chart) this.chart.destroy();
+            const base = this._baseConfig();
             const apexConfig = {
-                chart: { type: "heatmap", height: this.options.height, toolbar: { show: this.options.toolbar } },
+                ...base,
+                chart: { type: "heatmap", height: this.options.height, toolbar: { show: this.options.toolbar }, background: "transparent" },
                 series: series,
-                xaxis: { categories: labels },
-                colors: ["#008FFB"],
+                xaxis: { categories: labels, labels: { style: { colors: "#64748B", fontSize: "11px" } } },
+                colors: ["#14B8A6"],
                 dataLabels: { enabled: false },
             };
             this.chart = new ApexCharts(this.el, apexConfig);

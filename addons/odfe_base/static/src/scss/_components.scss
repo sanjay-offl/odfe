@@ -1,6 +1,6 @@
 // ============================================================
 // ODFE — Shared Component Styles
-// Buttons, Cards, Badges, Inputs, Modals
+// Premium Glass Design System
 // ============================================================
 
 @import 'variables';
@@ -51,10 +51,18 @@
         &:hover { @include glow-gold; }
     }
 
-    &-sm { padding: var(--odfe-space-2) var(--odfe-space-4); font-size: var(--odfe-text-sm); min-height: 34px; }
-    &-lg { padding: var(--odfe-space-4) var(--odfe-space-8); font-size: var(--odfe-text-lg); min-height: 52px; }
+    &-outline {
+        background: transparent;
+        border: 1px solid var(--odfe-glass-border);
+        color: var(--odfe-text-secondary);
+        &:hover { @include glass-hover; color: var(--odfe-text-primary); border-color: var(--odfe-glass-border-hover); }
+    }
+
+    &-sm { padding: var(--odfe-space-2) var(--odfe-space-4); font-size: var(--odfe-text-sm); min-height: 36px; border-radius: var(--odfe-radius-md); }
+    &-lg { padding: var(--odfe-space-4) var(--odfe-space-8); font-size: var(--odfe-text-lg); min-height: 52px; border-radius: var(--odfe-radius-xl); }
     &-block { width: 100%; }
-    &-icon { padding: var(--odfe-space-3); width: 44px; height: 44px; border-radius: var(--odfe-radius-md); }
+    &-icon { padding: var(--odfe-space-3); width: 48px; height: 48px; border-radius: var(--odfe-radius-lg); }
+    &-round { border-radius: var(--odfe-radius-full); }
 }
 
 // ── Glass Card ────────────────────────────────────────────────
@@ -84,6 +92,12 @@
     }
 }
 
+// ── Glass Panel ───────────────────────────────────────────────
+.odfe-panel {
+    @include glass-panel;
+    padding: var(--odfe-space-6);
+}
+
 // ── KPI Card ──────────────────────────────────────────────────
 .odfe-kpi {
     @include glass-card;
@@ -92,8 +106,8 @@
     overflow: hidden;
 
     &__icon {
-        width: 44px; height: 44px;
-        border-radius: var(--odfe-radius-md);
+        width: 48px; height: 48px;
+        border-radius: var(--odfe-radius-lg);
         @include flex-center;
         font-size: var(--odfe-text-xl);
         margin-bottom: var(--odfe-space-4);
@@ -160,10 +174,38 @@
     &--gold { @include badge(var(--odfe-gold-light), var(--odfe-gold)); }
 }
 
+// ── Chips ─────────────────────────────────────────────────────
+.odfe-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--odfe-space-2);
+    padding: var(--odfe-space-1) var(--odfe-space-3);
+    background: var(--odfe-glass-bg);
+    border: 1px solid var(--odfe-glass-border);
+    border-radius: var(--odfe-radius-full);
+    font-size: var(--odfe-text-xs);
+    font-weight: 500;
+    color: var(--odfe-text-secondary);
+    transition: all var(--odfe-transition-fast);
+    cursor: pointer;
+
+    &:hover { @include glass-hover; color: var(--odfe-text-primary); }
+
+    &.active {
+        background: var(--odfe-primary-light);
+        border-color: var(--odfe-primary);
+        color: var(--odfe-primary);
+    }
+
+    &--veg { border-color: rgba(34, 197, 94, 0.3); color: var(--odfe-success); }
+    &--egg { border-color: rgba(245, 158, 11, 0.3); color: var(--odfe-warning); }
+    &--non-veg { border-color: rgba(239, 68, 68, 0.3); color: var(--odfe-danger); }
+}
+
 // ── Input ─────────────────────────────────────────────────────
 .odfe-input {
     @include input-field;
-    height: 44px;
+    height: var(--odfe-input-height);
 }
 
 .odfe-textarea {
@@ -174,7 +216,7 @@
 
 .odfe-select {
     @include input-field;
-    height: 44px;
+    height: var(--odfe-input-height);
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2394A3B8' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -202,7 +244,7 @@
 
     &__input {
         @include input-field;
-        height: 44px;
+        height: var(--odfe-input-height);
         padding-left: 42px;
     }
 
@@ -270,6 +312,61 @@
         display: flex;
         gap: var(--odfe-space-3);
         justify-content: flex-end;
+    }
+
+    &--lg { max-width: 720px; }
+    &--xl { max-width: 960px; }
+    &--fullscreen { max-width: 100%; width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+}
+
+// ── Drawer ────────────────────────────────────────────────────
+.odfe-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 480px;
+    @include glass-drawer;
+    z-index: var(--odfe-z-modal);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform var(--odfe-transition-slow);
+
+    &.open {
+        transform: translateX(0);
+    }
+
+    &__header {
+        @include flex-between;
+        padding: var(--odfe-space-5) var(--odfe-space-6);
+        border-bottom: 1px solid var(--odfe-glass-border);
+    }
+
+    &__title { @include heading-3; }
+
+    &__close {
+        @include touch-target;
+        width: 36px; height: 36px;
+        border-radius: var(--odfe-radius-full);
+        background: transparent;
+        border: none;
+        color: var(--odfe-text-secondary);
+        @include flex-center;
+        &:hover { background: var(--odfe-glass-bg); color: var(--odfe-text-primary); }
+    }
+
+    &__body {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--odfe-space-6);
+        @include custom-scrollbar;
+    }
+
+    &__footer {
+        padding: var(--odfe-space-4) var(--odfe-space-6);
+        border-top: 1px solid var(--odfe-glass-border);
     }
 }
 
@@ -346,7 +443,7 @@
     padding: var(--odfe-space-2) var(--odfe-space-5);
     border-radius: var(--odfe-radius-md);
     font-size: var(--odfe-text-sm);
-    min-height: 36px;
+    min-height: 38px;
 
     &.active, &--active {
         background: var(--odfe-primary);
@@ -428,11 +525,11 @@
         @include button-base;
         background: transparent;
         color: var(--odfe-text-secondary);
-        width: 36px; height: 36px;
+        width: 40px; height: 40px;
         padding: 0;
         border-radius: var(--odfe-radius-md);
         font-size: var(--odfe-text-sm);
-        min-height: 36px; min-width: 36px;
+        min-height: 40px; min-width: 40px;
 
         &.active {
             background: var(--odfe-primary);
@@ -442,5 +539,75 @@
         &:hover:not(.active) {
             background: var(--odfe-glass-bg);
         }
+    }
+}
+
+// ── Progress Bar ──────────────────────────────────────────────
+.odfe-progress {
+    height: 6px;
+    border-radius: var(--odfe-radius-full);
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+
+    &__bar {
+        height: 100%;
+        border-radius: var(--odfe-radius-full);
+        background: linear-gradient(90deg, var(--odfe-primary), var(--odfe-accent));
+        transition: width var(--odfe-transition-slow);
+    }
+
+    &--sm { height: 4px; }
+    &--lg { height: 8px; }
+}
+
+// ── Stepper ───────────────────────────────────────────────────
+.odfe-stepper {
+    display: flex;
+    align-items: center;
+    gap: var(--odfe-space-2);
+
+    &__step {
+        display: flex;
+        align-items: center;
+        gap: var(--odfe-space-2);
+
+        &-number {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            @include flex-center;
+            font-size: var(--odfe-text-xs);
+            font-weight: 700;
+            background: var(--odfe-glass-bg);
+            color: var(--odfe-text-tertiary);
+            border: 1px solid var(--odfe-glass-border);
+
+            &--active {
+                background: var(--odfe-primary);
+                color: white;
+                border-color: var(--odfe-primary);
+            }
+
+            &--completed {
+                background: var(--odfe-success);
+                color: white;
+                border-color: var(--odfe-success);
+            }
+        }
+
+        &-label {
+            font-size: var(--odfe-text-sm);
+            color: var(--odfe-text-tertiary);
+
+            &--active { color: var(--odfe-text-primary); font-weight: 600; }
+        }
+    }
+
+    &__line {
+        flex: 1;
+        height: 2px;
+        background: var(--odfe-glass-border);
+        margin: 0 var(--odfe-space-2);
+
+        &--active { background: var(--odfe-primary); }
     }
 }

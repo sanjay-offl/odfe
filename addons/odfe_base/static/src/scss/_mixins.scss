@@ -1,8 +1,9 @@
 // ============================================================
 // ODFE Design System — Mixins & Utilities
+// Premium Apple-Inspired Glassmorphism
 // ============================================================
 
-// ── Glass Card ────────────────────────────────────────────────
+// ── Glass System ──────────────────────────────────────────────
 @mixin glass($blur: 24px) {
     background: var(--odfe-glass-bg);
     backdrop-filter: blur($blur);
@@ -23,45 +24,101 @@
 
 @mixin glass-card {
     @include glass;
-    border-radius: var(--odfe-radius-xl);
-    transition: all var(--odfe-transition-base);
+    border-radius: var(--odfe-radius-lg);
+    transition: all 250ms ease;
 
     &:hover {
         @include glass-hover;
-        transform: translateY(-2px);
+        transform: translateY(-4px) scale(1.02);
         box-shadow: var(--odfe-glass-shadow-lg);
     }
 }
 
 @mixin glass-card-static {
     @include glass;
-    border-radius: var(--odfe-radius-xl);
+    border-radius: var(--odfe-radius-lg);
+}
+
+@mixin glass-panel {
+    @include glass(24px);
+    border-radius: var(--odfe-radius-lg);
+    border: 1px solid var(--odfe-glass-border);
+}
+
+@mixin glass-sidebar {
+    @include glass(24px);
+    border-radius: 0;
+    border-right: 1px solid var(--odfe-glass-border);
+}
+
+@mixin glass-navbar {
+    @include glass(24px);
+    border-radius: 0;
+    border-bottom: 1px solid var(--odfe-glass-border);
+}
+
+@mixin glass-modal {
+    @include glass(28px);
+    border-radius: var(--odfe-radius-2xl);
+    border: 1px solid var(--odfe-glass-border);
+}
+
+@mixin glass-drawer {
+    @include glass(24px);
+    border-radius: var(--odfe-radius-2xl) 0 0 var(--odfe-radius-2xl);
+    border-right: 1px solid var(--odfe-glass-border);
+}
+
+@mixin glass-input {
+    @include glass(8px);
+    border-radius: var(--odfe-radius-md);
+    border: 1px solid var(--odfe-glass-border);
+    color: var(--odfe-text-primary);
+
+    &:hover {
+        border-color: var(--odfe-glass-border-hover);
+    }
+
+    &:focus {
+        border-color: var(--odfe-primary);
+        box-shadow: 0 0 0 3px var(--odfe-primary-light);
+    }
+}
+
+@mixin glass-badge {
+    @include glass(8px);
+    border-radius: var(--odfe-radius-full);
+    border: 1px solid var(--odfe-glass-border);
 }
 
 // ── Glow Effects ──────────────────────────────────────────────
 @mixin glow($color: var(--odfe-primary)) {
-    box-shadow: 0 0 24px rgba(15, 118, 110, 0.25),
-                0 0 48px rgba(15, 118, 110, 0.10);
+    box-shadow: 0 0 20px rgba(50, 210, 107, 0.2),
+                0 0 40px rgba(50, 210, 107, 0.08);
 }
 
 @mixin glow-accent {
-    box-shadow: 0 0 24px var(--odfe-accent-glow),
-                0 0 48px rgba(34, 197, 94, 0.10);
+    box-shadow: 0 0 20px var(--odfe-accent-glow),
+                0 0 40px rgba(34, 197, 94, 0.08);
 }
 
 @mixin glow-gold {
-    box-shadow: 0 0 24px var(--odfe-gold-glow),
-                0 0 48px rgba(200, 155, 60, 0.10);
+    box-shadow: 0 0 20px var(--odfe-gold-glow),
+                0 0 40px rgba(214, 167, 79, 0.08);
 }
 
 @mixin glow-danger {
-    box-shadow: 0 0 24px var(--odfe-danger-glow);
+    box-shadow: 0 0 20px var(--odfe-danger-glow);
 }
 
-// ── Touch Button ──────────────────────────────────────────────
+@mixin glow-pulse {
+    animation: odfe-pulseGlow 2s ease-in-out infinite;
+}
+
+// ── Touch & Button System ─────────────────────────────────────
 @mixin touch-target {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 48px;
+    min-width: 48px;
     cursor: pointer;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
@@ -95,6 +152,34 @@
     }
 }
 
+@mixin btn-primary {
+    @include button-base;
+    background: linear-gradient(135deg, var(--odfe-primary), var(--odfe-primary-hover));
+    color: white;
+    &:hover { @include glow; transform: translateY(-1px); }
+}
+
+@mixin btn-accent {
+    @include button-base;
+    background: linear-gradient(135deg, var(--odfe-accent), var(--odfe-accent-hover));
+    color: var(--odfe-text-inverse);
+    &:hover { @include glow-accent; transform: translateY(-1px); }
+}
+
+@mixin btn-ghost {
+    @include button-base;
+    background: transparent;
+    color: var(--odfe-text-secondary);
+    &:hover { background: var(--odfe-glass-bg); color: var(--odfe-text-primary); }
+}
+
+@mixin btn-glass {
+    @include button-base;
+    @include glass(12px);
+    color: var(--odfe-text-primary);
+    &:hover { @include glass-hover; }
+}
+
 // ── Input Field ───────────────────────────────────────────────
 @mixin input-field {
     width: 100%;
@@ -107,6 +192,7 @@
     font-size: var(--odfe-text-base);
     outline: none;
     transition: all var(--odfe-transition-fast);
+    min-height: var(--odfe-input-height);
 
     &::placeholder {
         color: var(--odfe-text-tertiary);
@@ -213,6 +299,27 @@
     flex-direction: column;
 }
 
+@mixin flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+@mixin flex-wrap {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+@mixin flex-1 {
+    flex: 1;
+    min-width: 0;
+}
+
+@mixin grid-auto($min: 160px, $gap: var(--odfe-space-3)) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
+    gap: $gap;
+}
+
 // ── Scrollbar ─────────────────────────────────────────────────
 @mixin custom-scrollbar($width: 5px) {
     &::-webkit-scrollbar {
@@ -287,11 +394,105 @@ $breakpoint-2xl: 1440px;
     @media (min-width: $breakpoint-2xl) { @content; }
 }
 
+// ── POS-Specific Responsive ───────────────────────────────────
+@mixin pos-tablet {
+    @media (min-width: $breakpoint-md) and (max-width: #{$breakpoint-xl - 1px}) { @content; }
+}
+
+@mixin pos-desktop {
+    @media (min-width: $breakpoint-xl) { @content; }
+}
+
+@mixin pos-ultrawide {
+    @media (min-width: $breakpoint-2xl) { @content; }
+}
+
 // ── Stagger Animation ─────────────────────────────────────────
-@mixin stagger-children($delay: 40ms, $max: 20) {
+@mixin stagger-children($delay: 40ms, $max: 24) {
     @for $i from 1 through $max {
         &:nth-child(#{$i}) {
             animation-delay: #{$i * $delay};
         }
     }
+}
+
+// ── Image Placeholder ─────────────────────────────────────────
+@mixin image-placeholder {
+    background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--odfe-text-muted);
+    opacity: 0.4;
+}
+
+// ── Veg/Egg Badge ─────────────────────────────────────────────
+@mixin veg-badge {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 2px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    &::after {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    &--veg {
+        border-color: #22C55E;
+        &::after { background: #22C55E; }
+    }
+
+    &--egg {
+        border-color: #F59E0B;
+        &::after { background: #F59E0B; }
+    }
+
+    &--non-veg {
+        border-color: #EF4444;
+        &::after { background: #EF4444; }
+    }
+}
+
+// ── Priority Badge ────────────────────────────────────────────
+@mixin priority-badge($color: var(--odfe-warning)) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba($color, 0.15);
+    color: $color;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-radius: var(--odfe-radius-full);
+}
+
+// ── Preparation Time Badge ────────────────────────────────────
+@mixin prep-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--odfe-text-tertiary);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: var(--odfe-radius-full);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+// ── Rating Stars ──────────────────────────────────────────────
+@mixin rating-stars {
+    display: inline-flex;
+    gap: 1px;
+    color: var(--odfe-gold);
+    font-size: 10px;
 }

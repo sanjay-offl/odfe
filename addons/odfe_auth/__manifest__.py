@@ -16,6 +16,8 @@
         'views/employee_views.xml',
         'views/roles_views.xml',
         'views/menu_views.xml',
+        'views/landing_page.xml',
+        'views/login_page.xml',
     ],
     'installable': True,
     'application': False,

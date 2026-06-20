@@ -6,9 +6,29 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
     const MENU_URL = '/api/self/menu';
     const SUBMIT_URL = '/api/self/order/submit';
     const VALIDATE_URL = '/api/self/validate-token';
+    const CURRENCY = '\u20B9';
 
     function formatPrice(amount) {
-        return parseFloat(amount || 0).toFixed(2);
+        return CURRENCY + parseFloat(amount || 0).toFixed(0);
+    }
+
+    const PRODUCT_EMOJIS = {
+        'coffee': '\u2615', 'espresso': '\u2615', 'cappuccino': '\u2615', 'latte': '\u2615',
+        'mocha': '\u2615', 'americano': '\u2615', 'macchiato': '\u2615', 'cold coffee': '\u2615',
+        'tea': '\uD83C\uDF75', 'chai': '\uD83C\uDF75', 'green tea': '\uD83C\uDF75', 'masala chai': '\uD83C\uDF75',
+        'juice': '\uD83E\uDDC3', 'mango': '\uD83E\uDD6D', 'smoothie': '\uD83E\uDDC3',
+        'pastry': '\uD83E\uDD50', 'cake': '\uD83C\uDF70', 'croissant': '\uD83E\uDD50',
+        'sandwich': '\uD83C\uDD6F', 'burger': '\uD83C\uDF54', 'pizza': '\uD83C\uDF55',
+        'samosa': '\uD83C\uDF5F', 'vada pav': '\uD83C\uDF5F', 'dosa': '\uD83C\uDF5F',
+        'default': '\uD83C\uDF54',
+    };
+
+    function getEmoji(name) {
+        const lower = (name || '').toLowerCase();
+        for (const [key, emoji] of Object.entries(PRODUCT_EMOJIS)) {
+            if (lower.includes(key)) return emoji;
+        }
+        return PRODUCT_EMOJIS['default'];
     }
 
     class SelfOrderApp extends Component {
@@ -16,7 +36,7 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
             <div class="self-order-app">
                 <t t-if="state.loading">
                     <div class="loading-screen">
-                        <div class="loading-spinner"></div>
+                        <div class="loading-spinner"/>
                         <p class="loading-text">Loading menu...</p>
                     </div>
                 </t>
@@ -31,21 +51,27 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                     <header class="app-header">
                         <div class="header-top">
                             <div class="header-info">
-                                <span class="table-badge">Table <t t-esc="state.tableName"/></span>
+                                <span class="table-badge">
+                                    <i class="fa fa-cutlery" style="margin-right: 6px;"/>
+                                    Table <t t-esc="state.tableName"/>
+                                </span>
                             </div>
                             <button class="cart-button" t-on-click="toggleCart" t-att-class="{'has-items': state.cart.length > 0}">
-                                <span class="cart-icon">🛒</span>
+                                <span class="cart-icon">&#x1F6D2;</span>
                                 <span class="cart-count" t-if="state.cart.length > 0"><t t-esc="state.cart.length"/></span>
                             </button>
                         </div>
                         <div class="header-search">
-                            <input type="text" class="search-input" placeholder="Search menu..." t-model="state.searchQuery"/>
+                            <div class="search-wrapper">
+                                <i class="fa fa-search search-icon"/>
+                                <input type="text" class="search-input" placeholder="Search menu..." t-model="state.searchQuery"/>
+                            </div>
                         </div>
                         <div class="category-tabs" t-if="state.categories.length > 0">
                             <button class="category-tab" t-att-class="{'active': state.activeCategory === null}" t-on-click="selectCategory(null)">
                                 All
                             </button>
-                            <button class="category-tab" t-att-class="{'active': state.activeCategory === cat.id}" t-foreach="state.categories" t-as="cat" t-on-click="selectCategory(cat.id)">
+                            <button class="category-tab" t-att-class="{'active': state.activeCategory === cat.id}" t-foreach="state.categories" t-as="cat" t-key="cat.id" t-on-click="selectCategory(cat.id)">
                                 <t t-esc="cat.name"/>
                             </button>
                         </div>
@@ -55,20 +81,20 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                         <t t-if="state.activeCategory !== null">
                             <t t-set="currentCat" t-value="state.categories.find(c => c.id === state.activeCategory)"/>
                             <div class="category-section" t-if="currentCat">
-                                <div class="category-header" t-if="currentCat.image">
-                                    <img t-att-src="currentCat.image" t-att-alt="currentCat.name" class="category-image"/>
-                                </div>
                                 <div class="product-grid">
                                     <div class="product-card" t-foreach="currentCat.products" t-as="product" t-key="product.id"
                                          t-if="!state.searchQuery || product.name.toLowerCase().includes(state.searchQuery.toLowerCase())">
                                         <div class="product-image" t-if="product.image">
                                             <img t-att-src="product.image" t-att-alt="product.name"/>
                                         </div>
+                                        <div class="product-image product-image--emoji" t-else="">
+                                            <span style="font-size: 48px;" t-esc="getEmoji(product.name)"/>
+                                        </div>
                                         <div class="product-info">
                                             <h3 class="product-name"><t t-esc="product.name"/></h3>
                                             <p class="product-desc" t-if="product.description"><t t-esc="product.description"/></p>
                                             <div class="product-bottom">
-                                                <span class="product-price">$<t t-esc="formatPrice(product.price)"/></span>
+                                                <span class="product-price"><t t-esc="formatPrice(product.price)"/></span>
                                                 <button class="btn-add" t-on-click="() => addToCart(product)">+ Add</button>
                                             </div>
                                         </div>
@@ -86,11 +112,14 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                                             <div class="product-image" t-if="product.image">
                                                 <img t-att-src="product.image" t-att-alt="product.name"/>
                                             </div>
+                                            <div class="product-image product-image--emoji" t-else="">
+                                                <span style="font-size: 48px;" t-esc="getEmoji(product.name)"/>
+                                            </div>
                                             <div class="product-info">
                                                 <h3 class="product-name"><t t-esc="product.name"/></h3>
                                                 <p class="product-desc" t-if="product.description"><t t-esc="product.description"/></p>
                                                 <div class="product-bottom">
-                                                    <span class="product-price">$<t t-esc="formatPrice(product.price)"/></span>
+                                                    <span class="product-price"><t t-esc="formatPrice(product.price)"/></span>
                                                     <button class="btn-add" t-on-click="() => addToCart(product)">+ Add</button>
                                                 </div>
                                             </div>
@@ -102,72 +131,73 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                     </main>
 
                     <t t-if="state.cart.length > 0">
-                        <div class="cart-overlay" t-att-class="{'open': state.cartOpen}" t-on-click="toggleCart"></div>
+                        <div class="cart-overlay" t-att-class="{'open': state.cartOpen}" t-on-click="toggleCart"/>
                         <aside class="cart-panel" t-att-class="{'open': state.cartOpen}">
                             <div class="cart-header">
                                 <h2>Your Order</h2>
-                                <button class="cart-close" t-on-click="toggleCart">✕</button>
+                                <button class="cart-close" t-on-click="toggleCart">&#10005;</button>
                             </div>
                             <div class="cart-items">
                                 <div class="cart-item" t-foreach="state.cart" t-as="item" t-key="item.id">
-                                    <div class="cart-item-info">
-                                        <span class="cart-item-name"><t t-esc="item.name"/></span>
-                                        <div class="cart-item-controls">
-                                            <button class="qty-btn" t-on-click="() => updateQty(item, -1)">−</button>
-                                            <span class="qty-value"><t t-esc="item.quantity"/></span>
-                                            <button class="qty-btn" t-on-click="() => updateQty(item, 1)">+</button>
+                                    <div class="cart-item-left">
+                                        <span class="cart-item-emoji" t-esc="getEmoji(item.name)"/>
+                                        <div class="cart-item-info">
+                                            <span class="cart-item-name"><t t-esc="item.name"/></span>
+                                            <div class="cart-item-controls">
+                                                <button class="qty-btn" t-on-click="() => updateQty(item, -1)">&#8722;</button>
+                                                <span class="qty-value"><t t-esc="item.quantity"/></span>
+                                                <button class="qty-btn" t-on-click="() => updateQty(item, 1)">+</button>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="cart-item-total">
-                                        $<t t-esc="formatPrice(item.price * item.quantity)"/>
-                                        <button class="cart-item-remove" t-on-click="() => removeItem(item)">✕</button>
+                                    <div class="cart-item-right">
+                                        <span class="cart-item-price"><t t-esc="formatPrice(item.price * item.quantity)"/></span>
+                                        <button class="cart-item-remove" t-on-click="() => removeItem(item)">&#10005;</button>
                                     </div>
                                 </div>
                             </div>
-                            <t t-if="state.cart.length > 0">
-                                <div class="cart-footer">
-                                    <div class="cart-totals">
-                                        <div class="cart-total-row">
-                                            <span>Subtotal</span>
-                                            <span>$<t t-esc="formatPrice(cartSubtotal)"/></span>
-                                        </div>
-                                        <div class="cart-total-row total">
-                                            <span>Total</span>
-                                            <span>$<t t-esc="formatPrice(cartSubtotal)"/></span>
-                                        </div>
+                            <div class="cart-footer">
+                                <div class="cart-totals">
+                                    <div class="cart-total-row">
+                                        <span>Subtotal</span>
+                                        <span><t t-esc="formatPrice(cartSubtotal)"/></span>
                                     </div>
-                                    <div class="cart-note">
-                                        <input type="text" class="note-input" placeholder="Add a note (optional)" t-model="state.orderNote"/>
+                                    <div class="cart-total-row total">
+                                        <span>Total</span>
+                                        <span><t t-esc="formatPrice(cartSubtotal)"/></span>
                                     </div>
-                                    <button class="btn-checkout" t-on-click="showCheckout">
-                                        Proceed to Checkout
-                                    </button>
                                 </div>
-                            </t>
+                                <div class="cart-note">
+                                    <input type="text" class="note-input" placeholder="Add a note (optional)" t-model="state.orderNote"/>
+                                </div>
+                                <button class="btn-checkout" t-on-click="showCheckout">
+                                    Proceed to Checkout
+                                </button>
+                            </div>
                         </aside>
                     </t>
 
                     <t t-if="state.showCheckout">
-                        <div class="checkout-overlay" t-on-click="closeCheckout"></div>
+                        <div class="checkout-overlay" t-on-click="closeCheckout"/>
                         <div class="checkout-modal">
                             <div class="checkout-header">
                                 <h2>Confirm Order</h2>
-                                <button class="checkout-close" t-on-click="closeCheckout">✕</button>
+                                <button class="checkout-close" t-on-click="closeCheckout">&#10005;</button>
                             </div>
                             <div class="checkout-items">
                                 <div class="checkout-item" t-foreach="state.cart" t-as="item" t-key="item.id">
                                     <span class="checkout-item-name"><t t-esc="item.quantity"/>x <t t-esc="item.name"/></span>
-                                    <span class="checkout-item-price">$<t t-esc="formatPrice(item.price * item.quantity)"/></span>
+                                    <span class="checkout-item-price"><t t-esc="formatPrice(item.price * item.quantity)"/></span>
                                 </div>
                             </div>
                             <div class="checkout-totals">
                                 <div class="checkout-total-row">
                                     <span>Subtotal</span>
-                                    <span>$<t t-esc="formatPrice(cartSubtotal)"/></span>
+                                    <span><t t-esc="formatPrice(cartSubtotal)"/></span>
                                 </div>
                                 <div class="checkout-total-row total">
                                     <span>Total</span>
-                                    <span>$<t t-esc="formatPrice(cartSubtotal)"/></span>
+                                    <span><t t-esc="formatPrice(cartSubtotal)"/></span>
                                 </div>
                             </div>
                             <div class="checkout-contact">
@@ -179,7 +209,7 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                                     Placing Order...
                                 </t>
                                 <t t-else="">
-                                    Place Order — $<t t-esc="formatPrice(cartSubtotal)"/>
+                                    Place Order &#8212; <t t-esc="formatPrice(cartSubtotal)"/>
                                 </t>
                             </button>
                         </div>
@@ -187,7 +217,7 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
 
                     <t t-if="state.orderSuccess">
                         <div class="success-screen">
-                            <div class="success-icon">✓</div>
+                            <div class="success-icon">&#10003;</div>
                             <h2>Order Placed!</h2>
                             <p class="success-ref">Order #<t t-esc="state.orderRef"/></p>
                             <p class="success-msg">Your order has been sent to the kitchen.</p>
@@ -221,6 +251,14 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
             });
             this.menuContent = useRef('menuContent');
             onMounted(() => this.initApp());
+        }
+
+        getEmoji(name) {
+            return getEmoji(name);
+        }
+
+        formatPrice(amount) {
+            return formatPrice(amount);
         }
 
         async initApp() {
@@ -283,7 +321,6 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
                 });
             }
             this.state.cartOpen = false;
-            this.state = { ...this.state };
         }
 
         updateQty(item, delta) {
@@ -291,7 +328,6 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
             if (item.quantity <= 0) {
                 this.removeItem(item);
             }
-            this.state = { ...this.state };
         }
 
         removeItem(item) {
@@ -299,7 +335,6 @@ odoo.define('odfe_self_order.SelfOrderApp', function (require) {
             if (idx >= 0) {
                 this.state.cart.splice(idx, 1);
             }
-            this.state = { ...this.state };
         }
 
         toggleCart() {

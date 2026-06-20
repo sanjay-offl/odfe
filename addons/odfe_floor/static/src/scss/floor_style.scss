@@ -132,7 +132,7 @@
 
     &.selected {
         border-color: var(--odfe-primary);
-        box-shadow: 0 0 24px rgba(15,118,110,0.3);
+        box-shadow: 0 0 24px rgba(50,210,107,0.3);
     }
 
     &__number {
@@ -172,7 +172,7 @@
     height: 100vh;
     @include flex-center;
     @include flex-col;
-    background: linear-gradient(180deg, #08131A 0%, #0F2027 50%, #132D35 100%);
+    background: linear-gradient(180deg, #071216 0%, #0D1B20 50%, #132D35 100%);
     position: relative;
     overflow: hidden;
     text-align: center;
@@ -182,7 +182,7 @@
         content: '';
         position: fixed; inset: 0;
         background:
-            radial-gradient(ellipse 600px 500px at 50% 30%, rgba(15,118,110,0.10) 0%, transparent 60%),
+            radial-gradient(ellipse 600px 500px at 50% 30%, rgba(50,210,107,0.10) 0%, transparent 60%),
             radial-gradient(ellipse 400px 400px at 20% 80%, rgba(212,163,115,0.06) 0%, transparent 55%);
         pointer-events: none;
     }
@@ -206,7 +206,7 @@
             font-family: var(--odfe-font-heading);
             font-size: var(--odfe-text-3xl);
             font-weight: 800;
-            @include gradient-text(#0F766E, #22C55E);
+            @include gradient-text(#32D26B, #22C55E);
         }
     }
 

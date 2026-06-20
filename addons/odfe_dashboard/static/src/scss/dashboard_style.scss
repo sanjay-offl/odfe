@@ -64,42 +64,47 @@
     }
 
     &__icon {
-        width: 48px; height: 48px;
-        border-radius: var(--odfe-radius-lg);
+        width: 52px; height: 52px;
+        border-radius: var(--odfe-radius-xl);
         @include flex-center;
-        font-size: 22px;
+        font-size: 24px;
     }
 
     &__icon--revenue {
         background: var(--odfe-accent-light);
         color: var(--odfe-accent);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
     }
 
     &__icon--orders {
         background: var(--odfe-info-light);
         color: var(--odfe-info);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
     }
 
     &__icon--customers {
         background: var(--odfe-gold-light);
         color: var(--odfe-gold);
+        box-shadow: 0 4px 12px rgba(200, 155, 60, 0.2);
     }
 
     &__icon--tables {
         background: var(--odfe-caramel-light);
         color: var(--odfe-caramel);
+        box-shadow: 0 4px 12px rgba(212, 163, 115, 0.2);
     }
 
     &__icon--kitchen {
         background: var(--odfe-warning-light);
         color: var(--odfe-warning);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
     }
 
     &__trend {
         display: inline-flex;
         align-items: center;
         gap: 3px;
-        padding: 2px 8px;
+        padding: 3px 10px;
         border-radius: var(--odfe-radius-full);
         font-size: var(--odfe-text-xs);
         font-weight: 600;
@@ -219,8 +224,8 @@
 
     &__rank {
         @include mono-number;
-        width: 28px; height: 28px;
-        border-radius: var(--odfe-radius-sm);
+        width: 32px; height: 32px;
+        border-radius: var(--odfe-radius-md);
         @include flex-center;
         font-size: var(--odfe-text-xs);
         font-weight: 700;
@@ -232,8 +237,8 @@
     }
 
     &__image {
-        width: 44px; height: 44px;
-        border-radius: var(--odfe-radius-md);
+        width: 48px; height: 48px;
+        border-radius: var(--odfe-radius-lg);
         overflow: hidden;
         flex-shrink: 0;
         background: rgba(255,255,255,0.05);

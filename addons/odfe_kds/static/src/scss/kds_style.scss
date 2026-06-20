@@ -1,6 +1,6 @@
 // ============================================================
-// ODFE — Kitchen Display System (KDS)
-// Dark Mode | Large Tickets | Touch Friendly
+// ODFE — Kitchen Display System (KDS) / Barista Board
+// Premium Dark Mode | Large Tickets | Touch Friendly
 // ============================================================
 
 @import '../../odfe_base/static/src/scss/variables';
@@ -56,6 +56,7 @@
             font-size: var(--odfe-text-xs);
             color: var(--odfe-text-tertiary);
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
     }
 
@@ -67,7 +68,7 @@
     }
 }
 
-// Three columns
+// Four columns: New, Brewing, Ready, Collected
 .odfe-kds-columns {
     flex: 1;
     display: grid;
@@ -79,6 +80,7 @@
     z-index: 1;
 
     @include mobile { grid-template-columns: 1fr; }
+    @include tablet { grid-template-columns: repeat(2, 1fr); }
 }
 
 .odfe-kds-column {
@@ -93,13 +95,13 @@
         font-weight: 700;
         font-size: var(--odfe-text-md);
 
-        &--pending {
+        &--new {
             background: rgba(245,158,11,0.15);
             color: var(--odfe-warning);
             border-bottom: 2px solid var(--odfe-warning);
         }
 
-        &--preparing {
+        &--brewing {
             background: rgba(56,189,248,0.12);
             color: var(--odfe-info);
             border-bottom: 2px solid var(--odfe-info);
@@ -111,7 +113,7 @@
             border-bottom: 2px solid var(--odfe-success);
         }
 
-        &--completed {
+        &--collected {
             background: rgba(148,163,184,0.08);
             color: var(--odfe-text-tertiary);
             border-bottom: 2px solid var(--odfe-text-muted);
@@ -137,7 +139,7 @@
 // Ticket Card
 .odfe-kds-ticket {
     @include glass(12px);
-    border-radius: var(--odfe-radius-lg);
+    border-radius: var(--odfe-radius-xl);
     overflow: hidden;
     animation: odfe-fadeIn 280ms ease-out;
     cursor: pointer;
@@ -160,6 +162,14 @@
         @include badge(var(--odfe-primary-light), var(--odfe-primary));
     }
 
+    &__priority {
+        @include priority-badge;
+
+        &--urgent { @include priority-badge(var(--odfe-danger)); }
+        &--high { @include priority-badge(var(--odfe-warning)); }
+        &--normal { @include priority-badge(var(--odfe-info)); }
+    }
+
     &__timer {
         @include mono-number;
         font-size: var(--odfe-text-3xl);
@@ -170,6 +180,14 @@
         &--warning { color: var(--odfe-warning); }
         &--danger { color: var(--odfe-danger); animation: odfe-pulse 1s ease-in-out infinite; }
         &--ok { color: var(--odfe-accent); }
+        &--done { color: var(--odfe-success); }
+    }
+
+    &__customer {
+        font-size: var(--odfe-text-sm);
+        color: var(--odfe-text-secondary);
+        padding: 0 var(--odfe-space-4);
+        margin-bottom: var(--odfe-space-2);
     }
 
     &__items {
@@ -198,7 +216,17 @@
             font-size: var(--odfe-text-sm);
             color: var(--odfe-caramel);
             font-style: italic;
+            width: 100%;
+            margin-top: 2px;
         }
+    }
+
+    &__estimated {
+        @include flex-between;
+        padding: var(--odfe-space-2) var(--odfe-space-4);
+        font-size: var(--odfe-text-xs);
+        color: var(--odfe-text-tertiary);
+        border-top: 1px solid rgba(255,255,255,0.03);
     }
 
     &__footer {
@@ -212,15 +240,56 @@
         padding: var(--odfe-space-2) var(--odfe-space-5);
         border-radius: var(--odfe-radius-md);
         font-size: var(--odfe-text-sm);
-        min-height: 38px;
+        min-height: 40px;
+
+        &--accept {
+            background: var(--odfe-info-light);
+            color: var(--odfe-info);
+            &:hover { background: rgba(56,189,248,0.2); }
+        }
+
+        &--start {
+            background: var(--odfe-primary-light);
+            color: var(--odfe-primary);
+            &:hover { background: rgba(15,118,110,0.2); }
+        }
+
+        &--complete {
+            background: var(--odfe-success-light);
+            color: var(--odfe-success);
+            &:hover { background: rgba(34,197,94,0.2); }
+        }
+
+        &--collect {
+            background: var(--odfe-glass-bg);
+            color: var(--odfe-text-secondary);
+            &:hover { @include glass-hover; }
+        }
     }
 
     // Urgency border
     &--urgent {
         border-left: 3px solid var(--odfe-danger);
+        animation: odfe-pulseGlow 2s ease-in-out infinite;
     }
 
     &--warning {
         border-left: 3px solid var(--odfe-warning);
     }
+}
+
+// Sound indicator
+.odfe-kds-sound {
+    @include touch-target;
+    width: 44px; height: 44px;
+    border-radius: var(--odfe-radius-full);
+    @include glass(12px);
+    @include flex-center;
+    color: var(--odfe-text-secondary);
+    border: none;
+    cursor: pointer;
+    transition: all var(--odfe-transition-fast);
+
+    &:hover { @include glass-hover; color: var(--odfe-text-primary); }
+    &.muted { opacity: 0.5; }
 }

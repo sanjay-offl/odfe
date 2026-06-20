@@ -17,3 +17,7 @@ backend/node_modules/
 .env
 .env.local
 .DS_Store
+
+node_modules/
+.next/
+.env

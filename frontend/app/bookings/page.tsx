@@ -1,142 +1,197 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  HiOutlineArrowLeft,
-  HiOutlineCalendarDays,
-  HiOutlineClock,
-  HiOutlineUsers,
-  HiOutlineChevronLeft,
-  HiOutlineChevronRight,
-} from "react-icons/hi2";
+import { LuArrowLeft, LuCalendarDays, LuClock, LuUsers, LuPlus, LuX, LuChevronLeft, LuChevronRight, LuTrash2 } from "react-icons/lu";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch, apiPost, apiDelete } from "@/utils/useApi";
 
-const bookings = [
-  { id: 1, name: "Johnson Family", guests: 6, date: "Jun 20", time: "7:00 PM", table: "T-06", status: "Confirmed", phone: "+1 555-0101" },
-  { id: 2, name: "Mike & Sarah", guests: 2, date: "Jun 20", time: "7:30 PM", table: "T-03", status: "Confirmed", phone: "+1 555-0102" },
-  { id: 3, name: "Corporate Event", guests: 10, date: "Jun 21", time: "6:00 PM", table: "T-12", status: "Confirmed", phone: "+1 555-0103" },
-  { id: 4, name: "Brown Party", guests: 4, date: "Jun 21", time: "8:00 PM", table: "T-08", status: "Pending", phone: "+1 555-0104" },
-  { id: 5, name: "Kim Anniversary", guests: 2, date: "Jun 22", time: "7:00 PM", table: "T-01", status: "Confirmed", phone: "+1 555-0105" },
-  { id: 6, name: "Davis Reunion", guests: 8, date: "Jun 22", time: "6:30 PM", table: "T-12", status: "Pending", phone: "+1 555-0106" },
-  { id: 7, name: "Solo Dinner", guests: 1, date: "Jun 23", time: "7:30 PM", table: "T-10", status: "Confirmed", phone: "+1 555-0107" },
-  { id: 8, name: "Wilson Birthday", guests: 5, date: "Jun 24", time: "8:00 PM", table: "T-06", status: "Confirmed", phone: "+1 555-0108" },
-];
-
-const dates = ["Jun 20", "Jun 21", "Jun 22", "Jun 23", "Jun 24", "Jun 25", "Jun 26"];
-
-const statusColors: Record<string, string> = {
-  Confirmed: "bg-brand-500/15 text-brand-400",
-  Pending: "bg-amber-500/15 text-amber-400",
-  Cancelled: "bg-red-500/15 text-red-400",
-};
+interface Booking {
+  id: string;
+  bookingTime: string;
+  partySize: number;
+  status: string;
+  table?: { name: string };
+  customer?: { name: string; phone?: string };
+  customerId?: string;
+}
 
 export default function BookingsPage() {
-  const [selectedDate, setSelectedDate] = useState("Jun 20");
+  const { role } = useAuth();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [tables, setTables] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().slice(0, 10));
+  const [form, setForm] = useState({ customerId: "", tableId: "", partySize: "2", bookingTime: "", status: "Confirmed" });
 
-  const filtered = bookings.filter((b) => b.date === selectedDate);
+  const load = async () => {
+    setLoading(true);
+    const [bookRes, custRes, tableRes] = await Promise.all([
+      apiFetch("/bookings"),
+      apiFetch("/customers"),
+      apiFetch("/tables/tables"),
+    ]);
+    if (bookRes.success) setBookings(bookRes.data || []);
+    if (custRes.success) setCustomers(custRes.data || []);
+    if (tableRes.success) setTables(tableRes.data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const filtered = bookings.filter((b) => b.bookingTime?.slice(0, 10) === selectedDate);
+
+  const getDates = () => {
+    const dates = [];
+    for (let i = -3; i <= 7; i++) {
+      const d = new Date();
+      d.setDate(d.getDate() + i);
+      dates.push(d.toISOString().slice(0, 10));
+    }
+    return dates;
+  };
+
+  const openCreate = () => {
+    setForm({ customerId: "", tableId: "", partySize: "2", bookingTime: `${selectedDate}T19:00`, status: "Confirmed" });
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!form.customerId || !form.tableId || !form.bookingTime) return;
+    const res = await apiPost("/bookings", {
+      customerId: form.customerId,
+      tableId: form.tableId,
+      partySize: parseInt(form.partySize),
+      bookingTime: new Date(form.bookingTime).toISOString(),
+      status: form.status,
+    });
+    if (res.success) { setShowModal(false); load(); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Cancel this booking?")) return;
+    const res = await apiDelete(`/bookings/${id}`);
+    if (res.success) load();
+  };
+
+  const statusColors: Record<string, string> = {
+    Confirmed: "bg-emerald-500/15 text-emerald-400",
+    Pending: "bg-amber-500/15 text-amber-400",
+    Cancelled: "bg-red-500/15 text-red-400",
+    Completed: "bg-blue-500/15 text-blue-400",
+  };
+
+  if (role === 'EMPLOYEE') return <div className="min-h-screen bg-cafe-bg flex items-center justify-center"><p className="text-cafe-text-secondary">Access restricted</p></div>;
 
   return (
-    <div className="min-h-screen bg-surface-950">
-      <header className="flex items-center gap-4 border-b border-border px-6 py-4">
-        <Link
-          href="/dashboard"
-          className="rounded-xl p-2 text-text-muted transition-colors hover:bg-[var(--glass-border)] hover:text-brand-primary"
-        >
-          <HiOutlineArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <HiOutlineCalendarDays className="h-5 w-5 text-brand-400" />
-          <h1 className="text-lg font-bold text-text-primary">Bookings</h1>
-        </div>
-        <button className="btn-primary ml-auto flex items-center gap-2 text-sm">
-          <HiOutlineCalendarDays className="h-4 w-4" />
-          New Booking
-        </button>
+    <div className="min-h-screen bg-cafe-bg">
+      <header className="flex items-center gap-4 border-b border-cafe-border px-4 lg:px-6 py-4 bg-cafe-cream/40">
+        <Link href="/dashboard" className="rounded-btn p-2 text-cafe-text-secondary hover:text-cafe-accent"><LuArrowLeft className="h-5 w-5" /></Link>
+        <div className="flex items-center gap-2"><LuCalendarDays className="h-5 w-5 text-cafe-accent" /><h1 className="text-lg text-cafe-text">Bookings</h1></div>
+        <button onClick={openCreate} className="btn-primary ml-auto flex items-center gap-2 text-sm"><LuPlus className="h-4 w-4" />New Booking</button>
       </header>
 
-      <div className="p-6">
-        {/* Date Picker Concept */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <button className="rounded-xl p-2 text-text-muted hover:bg-[var(--glass-border)] hover:text-brand-primary">
-              <HiOutlineChevronLeft className="h-5 w-5" />
+      <div className="p-4 lg:p-6">
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2">
+          {getDates().map((date) => (
+            <button key={date} onClick={() => setSelectedDate(date)}
+              className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${selectedDate === date ? "bg-cafe-accent/10 text-cafe-accent" : "text-cafe-text-secondary hover:bg-cafe-cream/60"}`}>
+              {new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </button>
-            <div className="flex gap-2 overflow-x-auto">
-              {dates.map((date) => (
-                <button
-                  key={date}
-                  onClick={() => setSelectedDate(date)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
-                    selectedDate === date
-                      ? "bg-brand-500/20 text-brand-400"
-                      : "text-text-muted hover:bg-[var(--glass-border)] hover:text-brand-primary"
-                  }`}
-                >
-                  {date}
-                </button>
-              ))}
-            </div>
-            <button className="rounded-xl p-2 text-text-muted hover:bg-[var(--glass-border)] hover:text-brand-primary">
-              <HiOutlineChevronRight className="h-5 w-5" />
-            </button>
-          </div>
+          ))}
         </div>
 
-        {/* Bookings List */}
-        <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="px-5 py-4 font-medium text-text-muted">Guest</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Date & Time</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Party Size</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Table</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Status</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Phone</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filtered.length > 0 ? (
-                  filtered.map((booking) => (
-                    <tr key={booking.id} className="text-text-secondary transition-colors hover:bg-[var(--glass-border)]">
-                      <td className="px-5 py-4 font-medium text-text-primary">{booking.name}</td>
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <span>{booking.date}</span>
-                          <span className="flex items-center gap-1 text-text-muted">
-                            <HiOutlineClock className="h-3.5 w-3.5" />
-                            {booking.time}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className="flex items-center gap-1">
-                          <HiOutlineUsers className="h-3.5 w-3.5 text-text-muted" />
-                          {booking.guests}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 font-medium text-text-primary">{booking.table}</td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[booking.status]}`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 text-text-muted">{booking.phone}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="px-5 py-12 text-center text-text-muted">
-                      No bookings for {selectedDate}
-                    </td>
+        {loading ? (
+          <div className="text-center py-12 text-cafe-text-secondary">Loading...</div>
+        ) : (
+          <div className="glass-panel overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm font-sans">
+                <thead>
+                  <tr className="border-b border-cafe-border">
+                    <th className="px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Guest</th>
+                    <th className="px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Date & Time</th>
+                    <th className="px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Party</th>
+                    <th className="px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Table</th>
+                    <th className="px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Status</th>
+                    <th className="px-5 py-4"></th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-cafe-border/50">
+                  {filtered.length === 0 ? (
+                    <tr><td colSpan={6} className="px-5 py-12 text-center text-cafe-text-secondary">No bookings for this date</td></tr>
+                  ) : (
+                    filtered.map((booking) => (
+                      <tr key={booking.id} className="text-cafe-text-secondary hover:bg-cafe-cream/30 transition-colors">
+                        <td className="px-5 py-4 font-medium text-cafe-text">{booking.customer?.name || "Walk-in"}</td>
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            <span>{new Date(booking.bookingTime).toLocaleDateString()}</span>
+                            <span className="flex items-center gap-1 text-cafe-text-secondary"><LuClock className="h-3.5 w-3.5" />{new Date(booking.bookingTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4"><span className="flex items-center gap-1"><LuUsers className="h-3.5 w-3.5 text-cafe-text-secondary" />{booking.partySize}</span></td>
+                        <td className="px-5 py-4 font-medium text-cafe-text">{booking.table?.name || "N/A"}</td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[booking.status] || "bg-gray-500/15 text-gray-400"}`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <button onClick={() => handleDelete(booking.id)} className="text-cafe-text-secondary/40 hover:text-red-400 transition-colors"><LuTrash2 className="h-4 w-4" /></button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowModal(false)}>
+          <div className="w-full max-w-md rounded-2xl bg-cafe-bg p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg text-cafe-text">New Booking</h2>
+              <button onClick={() => setShowModal(false)} className="p-1 text-cafe-text-secondary hover:text-cafe-accent"><LuX className="h-5 w-5" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-cafe-text-secondary mb-1">Customer</label>
+                <select value={form.customerId} onChange={(e) => setForm({ ...form, customerId: e.target.value })} className="input-field">
+                  <option value="">Select customer</option>
+                  {customers.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-cafe-text-secondary mb-1">Table</label>
+                  <select value={form.tableId} onChange={(e) => setForm({ ...form, tableId: e.target.value })} className="input-field">
+                    <option value="">Select table</option>
+                    {tables.filter((t: any) => t.status === "AVAILABLE").map((t: any) => <option key={t.id} value={t.id}>{t.name} ({t.capacity} seats)</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-cafe-text-secondary mb-1">Party Size</label>
+                  <input type="number" value={form.partySize} onChange={(e) => setForm({ ...form, partySize: e.target.value })} className="input-field" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-cafe-text-secondary mb-1">Date & Time</label>
+                <input type="datetime-local" value={form.bookingTime} onChange={(e) => setForm({ ...form, bookingTime: e.target.value })} className="input-field" />
+              </div>
+              <div className="flex justify-end gap-3 pt-4">
+                <button onClick={() => setShowModal(false)} className="btn-secondary">Cancel</button>
+                <button onClick={handleSave} className="btn-primary">Create Booking</button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

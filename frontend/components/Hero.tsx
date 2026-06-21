@@ -1,99 +1,85 @@
 import Link from "next/link";
-import {
-  LuZap,
-  LuMonitor,
-  LuSmartphone,
-  LuChartBar,
-} from "react-icons/lu";
-
-const highlights = [
-  {
-    icon: LuZap,
-    label: "Smart POS",
-    sub: "Fast billing and order management.",
-  },
-  {
-    icon: LuMonitor,
-    label: "Kitchen Display",
-    sub: "Track every order in real time.",
-  },
-  {
-    icon: LuSmartphone,
-    label: "QR Self Ordering",
-    sub: "Customers order from their table.",
-  },
-  {
-    icon: LuChartBar,
-    label: "Business Analytics",
-    sub: "Monitor sales and performance.",
-  },
-];
 
 export default function Hero() {
   return (
-    <section className="relative flex min-h-screen items-center pt-24">
+    <section className="relative min-h-screen flex items-center pt-32 pb-16 lg:pt-32 lg:pb-16">
       {/* Subtle warm ambient glow */}
-      <div className="pointer-events-none absolute top-32 left-1/4 h-80 w-80 rounded-full bg-cafe-accent/8 blur-[100px]" />
-      <div className="pointer-events-none absolute bottom-32 right-1/3 h-64 w-64 rounded-full bg-cafe-surface/40 blur-[80px]" />
+      <div className="pointer-events-none absolute top-32 left-1/4 h-80 w-80 rounded-full bg-cafe-accent/10 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-32 right-1/3 h-64 w-64 rounded-full bg-cafe-dark/5 blur-[100px]" />
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center text-center">
-          {/* Tag */}
-          <div className="glass-panel mb-8 inline-flex items-center gap-2 px-5 py-2 text-xs font-medium text-cafe-accent tracking-wide">
-            <span className="h-1.5 w-1.5 rounded-full bg-cafe-accent" />
-            Odoo 19 · OWL · PostgreSQL · WebSocket
+      <div className="relative z-10 mx-auto max-w-[90%] lg:max-w-[85%] w-full">
+        <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-10">
+
+          {/* LEFT: Brand Story (55%) */}
+          <div className="w-full lg:w-[55%] flex flex-col items-start text-left animate-fade-up">
+
+            {/* Main Heading */}
+            <h1 className="text-5xl leading-[1.05] tracking-tight sm:text-6xl md:text-7xl lg:text-[5.5rem] font-display text-cafe-text">
+              Run Your Cafe<br />
+              <span className="text-cafe-accent">Beautifully.</span>
+            </h1>
+
+            {/* Sub Heading */}
+            <p className="mt-8 text-lg md:text-xl text-cafe-text font-medium leading-relaxed max-w-2xl">
+              Everything your team needs to serve customers faster, manage orders effortlessly, streamline kitchen operations, and grow your business from one beautifully designed platform.
+            </p>
+
+            {/* Description */}
+            <p className="mt-4 text-base md:text-lg text-cafe-text-secondary leading-relaxed max-w-2xl">
+              ODFE brings together Point of Sale, Kitchen Display, Customer Display, QR Ordering, Table Management, Payments, Reporting, and Analytics into one seamless experience built for modern cafes.
+            </p>
+
+            {/* CTAs */}
+            <div className="mt-10 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+              <Link href="#modules" className="btn-primary flex items-center justify-center gap-2 text-base w-full sm:w-auto !px-8 !py-4 shadow-lg">
+                Explore Platform
+              </Link>
+              <Link href="#demo" className="btn-secondary flex items-center justify-center text-base w-full sm:w-auto !px-8 !py-4">
+                Watch Demo
+              </Link>
+            </div>
+
+            {/* Statistics */}
+            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 w-full border-t border-cafe-border pt-8">
+              {[
+                { value: "500+", label: "Daily Orders" },
+                { value: "99.9%", label: "System Uptime" },
+                { value: "15+", label: "Integrated Modules" },
+                { value: "100%", label: "Real Time Sync" },
+              ].map((stat, i) => (
+                <div key={i} className="flex flex-col">
+                  <span className="text-2xl font-bold text-cafe-text font-display">{stat.value}</span>
+                  <span className="text-xs text-cafe-text-secondary uppercase tracking-wider mt-1">{stat.label}</span>
+                </div>
+              ))}
+            </div>
+
           </div>
 
-          {/* Headline */}
-          <h1 className="max-w-4xl text-4xl leading-[1.1] tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
-            Everything Your{" "}
-            <span className="text-cafe-accent">Cafe</span>
-            <br />
-            Needs in One Platform
-          </h1>
-
-          {/* Subtitle */}
-          <p className="mt-6 max-w-2xl text-base text-cafe-text-secondary sm:text-lg md:text-xl font-sans leading-relaxed">
-            ODFE is a complete Odoo 19 powered Cafe Point of Sale platform — 
-            integrated POS, Kitchen Display, QR Self Ordering, Analytics, 
-            and everything in between.
-          </p>
-
-          {/* CTAs */}
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row">
-            <Link href="/dashboard" className="btn-primary flex items-center gap-2 text-base">
-              Launch POS
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </Link>
-            <Link href="#features" className="btn-secondary text-base">
-              Explore Features
-            </Link>
-          </div>
-
-          {/* Highlight cards */}
-          <div className="mt-16 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
-            {highlights.map((item) => (
-              <div
-                key={item.label}
-                className="glass-card flex flex-col items-center p-5 hover:translate-y-[-4px]"
-              >
-                <item.icon className="mb-2 h-6 w-6 text-cafe-accent" strokeWidth={1.5} />
-                <span className="text-sm font-semibold text-cafe-text font-sans">
-                  {item.label}
-                </span>
-                <span className="mt-1 text-xs text-cafe-text-secondary text-center">
-                  {item.sub}
-                </span>
+          {/* RIGHT: Embedded Video (45%) */}
+          <div className="w-full lg:w-[45%] animate-fade-up" style={{ animationDelay: "150ms" }}>
+            <div className="relative w-full aspect-video rounded-[32px] overflow-hidden p-3"
+              style={{
+                background: "rgba(255,255,255,0.35)",
+                backdropFilter: "blur(18px)",
+                border: "1px solid rgba(255,255,255,0.45)",
+                boxShadow: "0 30px 80px rgba(40,25,10,0.12)",
+              }}>
+              <div className="relative w-full h-full rounded-[20px] overflow-hidden bg-cafe-bg">
+                <iframe
+                  className="absolute top-0 left-0 w-full h-full object-cover scale-[1.02]"
+                  src="https://www.youtube.com/embed/vA_ptd7F0h4?autoplay=1&mute=1&loop=1&playlist=vA_ptd7F0h4&controls=0&rel=0&modestbranding=1&playsinline=1"
+                  title="ODFE Cafe POS Demo"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
               </div>
-            ))}
+            </div>
           </div>
+
         </div>
       </div>
-
-      {/* Bottom fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-cafe-bg to-transparent" />
     </section>
   );
 }

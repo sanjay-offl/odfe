@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  LuArrowLeft,
-  LuMonitor,
-  LuClock,
-} from "react-icons/lu";
-import { fetchApi } from "@/utils/api";
+import { LuArrowLeft, LuMonitor, LuClock, LuCheck, LuX, LuRefreshCw } from "react-icons/lu";
+import { apiFetch, apiPut } from "@/utils/useApi";
+import { supabase } from "@/utils/supabaseClient";
 
 interface TicketItem {
   name: string;
@@ -22,31 +19,25 @@ interface Ticket {
   items: TicketItem[];
   time: string;
   elapsed: string;
+  elapsedMinutes: number;
   createdAt: string;
   status: string;
 }
 
-const columnConfig = {
-  new: {
-    label: "Queued",
-    dotClass: "bg-cafe-accent",
-    headerClass: "text-cafe-accent",
-  },
-  preparing: {
-    label: "Brewing",
-    dotClass: "bg-cafe-dark",
-    headerClass: "text-cafe-dark",
-  },
-  ready: {
-    label: "Ready",
-    dotClass: "bg-cafe-surface",
-    headerClass: "text-[#5A6448]",
-  },
-  done: {
-    label: "Served",
-    dotClass: "bg-cafe-text-secondary/40",
-    headerClass: "text-cafe-text-secondary",
-  },
+const columnConfig: Record<string, { label: string; dotClass: string; headerClass: string; }> = {
+  QUEUED: { label: "To Cook", dotClass: "bg-cafe-accent", headerClass: "text-cafe-accent" },
+  PREPARING: { label: "Preparing", dotClass: "bg-amber-500", headerClass: "text-amber-500" },
+  READY: { label: "Ready", dotClass: "bg-emerald-500", headerClass: "text-emerald-500" },
+  SERVED: { label: "Served", dotClass: "bg-cafe-text-secondary/40", headerClass: "text-cafe-text-secondary" },
+};
+
+const statusOrder = ["QUEUED", "PREPARING", "READY", "SERVED"];
+
+const statusTransitions: Record<string, string> = {
+  QUEUED: "PREPARING",
+  PREPARING: "READY",
+  READY: "SERVED",
+  SERVED: "SERVED",
 };
 
 export default function KitchenPage() {
@@ -55,25 +46,28 @@ export default function KitchenPage() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetchApi("/orders");
+      const response = await apiFetch("/orders");
       if (response.success && response.data) {
-        const formattedTickets = response.data.map((order: any) => {
+        const kitchenStatuses = ["QUEUED", "PREPARING", "READY", "SERVED"];
+        const kitchenOrders = response.data.filter((o: any) => kitchenStatuses.includes(o.status));
+
+        const formattedTickets = kitchenOrders.map((order: any) => {
           const createdAt = new Date(order.createdAt);
           const elapsedMins = Math.floor((Date.now() - createdAt.getTime()) / 60000);
           return {
             id: order.orderNo,
             table: order.table?.name || "Takeaway",
-            server: order.user?.name || "System",
+            server: order.employee?.name || order.user?.name || "System",
             status: order.status,
             createdAt: order.createdAt,
             time: createdAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            elapsed: `${elapsedMins}m`,
-            items:
-              order.items?.map((i: any) => ({
-                name: i.product?.name || "Item",
-                qty: i.quantity,
-                notes: i.notes,
-              })) || [],
+            elapsed: elapsedMins < 60 ? `${elapsedMins}m` : `${Math.floor(elapsedMins / 60)}h ${elapsedMins % 60}m`,
+            elapsedMinutes: elapsedMins,
+            items: order.items?.map((i: any) => ({
+              name: i.product?.name || "Item",
+              qty: i.quantity,
+              notes: i.notes,
+            })) || [],
           };
         });
         setTickets(formattedTickets);
@@ -87,44 +81,47 @@ export default function KitchenPage() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchOrders, 30000);
+    const channel = supabase.channel('kitchen-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Order' }, () => fetchOrders())
+      .subscribe();
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const advanceTicket = async (id: string, currentStatus: string) => {
-    let nextStatus = "";
-    if (currentStatus === "PENDING" || currentStatus === "QUEUED") nextStatus = "BREWING";
-    else if (currentStatus === "BREWING") nextStatus = "SERVED";
-    else if (currentStatus === "SERVED") nextStatus = "PAID";
-    else return;
-
+    const nextStatus = statusTransitions[currentStatus];
+    if (!nextStatus || nextStatus === currentStatus) return;
     try {
-      const response = await fetchApi(`/orders/${id}/status`, {
-        method: "PUT",
-        body: JSON.stringify({ status: nextStatus }),
-      });
-      if (response.success) {
-        fetchOrders();
-      }
+      await apiPut(`/orders/${id}/status`, { status: nextStatus });
+      fetchOrders();
     } catch (error) {
       console.error("Failed to update status", error);
     }
   };
 
-  const columns = {
-    new: tickets.filter((t) => t.status === "PENDING" || t.status === "QUEUED"),
-    preparing: tickets.filter((t) => t.status === "BREWING"),
-    ready: tickets.filter((t) => t.status === "SERVED"),
-    done: tickets.filter((t) => t.status === "PAID").slice(0, 5),
+  const columns: Record<string, Ticket[]> = {
+    QUEUED: tickets.filter((t) => t.status === "QUEUED"),
+    PREPARING: tickets.filter((t) => t.status === "PREPARING"),
+    READY: tickets.filter((t) => t.status === "READY"),
+    SERVED: tickets.filter((t) => t.status === "SERVED").slice(0, 10),
+  };
+
+  const getElapsedColor = (mins: number) => {
+    if (mins > 30) return "text-red-400";
+    if (mins > 15) return "text-amber-400";
+    return "text-cafe-text-secondary";
   };
 
   const TicketCard = ({ ticket }: { ticket: Ticket }) => (
-    <div className="glass-card p-4">
+    <div className={`glass-card p-4 ${ticket.elapsedMinutes > 20 ? "border-red-400/30" : ""}`}>
       <div className="mb-3 flex items-center justify-between">
         <span className="text-base font-bold text-cafe-text font-display">{ticket.id}</span>
         <span className="badge badge-queued text-xs">{ticket.table}</span>
       </div>
-      <p className="mb-2 text-xs text-cafe-text-secondary font-sans">Server: {ticket.server}</p>
+      <p className="mb-2 text-xs text-cafe-text-secondary font-sans">{ticket.server}</p>
       <div className="space-y-1.5">
         {ticket.items.map((item, i) => (
           <div key={i} className="flex items-center justify-between text-sm font-sans">
@@ -133,74 +130,69 @@ export default function KitchenPage() {
           </div>
         ))}
       </div>
+      {ticket.items.some(i => i.notes) && (
+        <div className="mt-2 text-xs text-amber-400 italic">
+          {ticket.items.filter(i => i.notes).map((item, i) => (
+            <div key={i}>{item.name}: {item.notes}</div>
+          ))}
+        </div>
+      )}
       <div className="mt-3 flex items-center justify-between border-t border-cafe-border pt-3">
-        <span className="flex items-center gap-1 text-xs text-cafe-text-secondary font-sans">
+        <span className={`flex items-center gap-1 text-xs font-sans ${getElapsedColor(ticket.elapsedMinutes)}`}>
           <LuClock className="h-3 w-3" strokeWidth={1.5} />
           {ticket.elapsed}
         </span>
-        {ticket.status !== "PAID" && (
-          <button
-            onClick={() => advanceTicket(ticket.id, ticket.status)}
-            className="btn-secondary !px-3 !py-1 !text-xs"
-          >
-            Advance
+        {ticket.status !== "SERVED" && (
+          <button onClick={() => advanceTicket(ticket.id, ticket.status)}
+            className="btn-secondary !px-3 !py-1 !text-xs flex items-center gap-1">
+            <LuCheck className="h-3 w-3" />{statusTransitions[ticket.status] || "Done"}
           </button>
         )}
       </div>
     </div>
   );
 
+  const totalActive = tickets.filter(t => t.status !== "SERVED").length;
+
   return (
     <div className="min-h-screen bg-cafe-bg">
-      <header className="flex items-center gap-4 border-b border-cafe-border px-6 py-4 bg-cafe-cream/40">
-        <Link
-          href="/dashboard"
-          className="rounded-btn p-2 text-cafe-text-secondary transition-colors hover:text-cafe-accent"
-          aria-label="Back to dashboard"
-        >
-          <LuArrowLeft className="h-5 w-5" strokeWidth={1.5} />
+      <header className="flex items-center gap-4 border-b border-cafe-border px-4 lg:px-6 py-4 bg-cafe-cream/40">
+        <Link href="/dashboard" className="rounded-btn p-2 text-cafe-text-secondary hover:text-cafe-accent">
+          <LuArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex items-center gap-2">
-          <LuMonitor className="h-5 w-5 text-cafe-accent" strokeWidth={1.5} />
-          <h1 className="text-lg text-cafe-text">Brew Bar</h1>
+          <LuMonitor className="h-5 w-5 text-cafe-accent" />
+          <h1 className="text-lg text-cafe-text">Kitchen Display</h1>
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <span className="badge badge-queued">
-            <span className="h-1.5 w-1.5 rounded-full bg-cafe-accent animate-pulse" />
-            {columns.new.length} Queued
-          </span>
-          <span className="badge badge-brewing">
-            {columns.preparing.length} Brewing
-          </span>
+          <button onClick={fetchOrders} className="rounded-btn p-2 text-cafe-text-secondary hover:text-cafe-accent">
+            <LuRefreshCw className="h-4 w-4" />
+          </button>
+          <span className="badge badge-queued">{totalActive} Active</span>
         </div>
       </header>
 
-      <div className="p-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {(Object.keys(columns) as Array<keyof typeof columns>).map((colKey) => {
+      <div className="p-4 lg:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+          {statusOrder.map((colKey) => {
             const cfg = columnConfig[colKey];
+            const items = columns[colKey];
             return (
               <div key={colKey}>
                 <div className="mb-4 flex items-center gap-2">
                   <span className={`h-2.5 w-2.5 rounded-full ${cfg.dotClass}`} />
-                  <h2 className={`text-sm font-semibold font-sans ${cfg.headerClass}`}>
-                    {cfg.label}
-                  </h2>
-                  <span className="ml-auto badge badge-paid text-xs">
-                    {columns[colKey].length}
-                  </span>
+                  <h2 className={`text-sm font-semibold font-sans ${cfg.headerClass}`}>{cfg.label}</h2>
+                  <span className="ml-auto badge badge-paid text-xs">{items.length}</span>
                 </div>
                 <div className="space-y-3">
                   {loading && tickets.length === 0 ? (
                     <div className="text-sm text-cafe-text-secondary p-4 text-center font-sans">Loading...</div>
-                  ) : columns[colKey].length === 0 ? (
+                  ) : items.length === 0 ? (
                     <div className="glass-card flex items-center justify-center p-6 text-sm text-cafe-text-secondary font-sans">
-                      Empty
+                      {colKey === "QUEUED" ? "All caught up!" : "Empty"}
                     </div>
                   ) : (
-                    columns[colKey].map((ticket) => (
-                      <TicketCard key={ticket.id} ticket={ticket} />
-                    ))
+                    items.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)
                   )}
                 </div>
               </div>

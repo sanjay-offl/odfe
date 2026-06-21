@@ -1,0 +1,25 @@
+meta {
+  name: Login
+  type: item
+  description: Authenticate user via Supabase
+}
+
+request {
+  method: POST
+  url: {{supabase_url}}/auth/v1/token?grant_type=password
+  header Content-Type: application/json
+  header apikey: {{supabase_anon_key}}
+  body:json {
+    "email": "testuser@example.com",
+    "password": "Password123!"
+  }
+}
+
+script:post-response {
+  const data = res.getBody();
+  if (res.status === 200) {
+    bru.setEnvVar("auth_token", data.access_token);
+    bru.setEnvVar("refresh_token", data.refresh_token);
+    bru.setEnvVar("user_id", data.user.id);
+  }
+}

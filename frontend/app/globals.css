@@ -250,3 +250,43 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(161, 108, 58, 0.2);
   color: #2A2118;
 }
+
+/* ============================================
+   RESPONSIVE FIXES
+   ============================================ */
+
+@media (max-width: 640px) {
+  .glass-card, .glass-panel {
+    border-radius: 14px;
+  }
+  .btn-primary, .btn-secondary {
+    padding: 10px 20px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  .input-field {
+    padding: 10px 14px;
+    font-size: 13px;
+    border-radius: 12px;
+  }
+  .badge {
+    padding: 3px 10px;
+    font-size: 11px;
+  }
+}
+
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
+table {
+  min-width: 600px;
+}
+
+@media (max-width: 640px) {
+  table {
+    min-width: unset;
+    width: 100%;
+  }
+}

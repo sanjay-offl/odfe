@@ -2,169 +2,142 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  HiOutlineArrowLeft,
-  HiOutlineClipboardDocumentList,
-  HiOutlineMagnifyingGlass,
-  HiOutlineFunnel,
-} from "react-icons/hi2";
-import { fetchApi } from "@/utils/api";
+import { LuArrowLeft, LuClipboardList, LuSearch } from "react-icons/lu";
+import { apiFetch, apiPut } from "@/utils/useApi";
+import { supabase } from "@/utils/supabaseClient";
 
 const statusColors: Record<string, string> = {
   PENDING: "bg-blue-500/15 text-blue-400",
   QUEUED: "bg-blue-500/15 text-blue-400",
-  BREWING: "bg-amber-500/15 text-amber-400",
+  PREPARING: "bg-amber-500/15 text-amber-400",
+  READY: "bg-emerald-500/15 text-emerald-400",
   SERVED: "bg-emerald-500/15 text-emerald-400",
-  PAID: "bg-brand-500/15 text-brand-400",
+  COMPLETED: "bg-emerald-500/15 text-emerald-400",
   CANCELLED: "bg-red-500/15 text-red-400",
+  DRAFT: "bg-gray-500/15 text-gray-400",
 };
 
-const filters = ["All", "PENDING", "QUEUED", "BREWING", "SERVED", "PAID", "CANCELLED"];
-
-interface Order {
-  id: string;
-  orderNo: string;
-  table: string;
-  items: number;
-  total: string;
-  status: string;
-  time: string;
-  server: string;
-}
+const filters = ["All", "QUEUED", "PREPARING", "READY", "COMPLETED", "CANCELLED"];
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
   const [activeFilter, setActiveFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadOrders() {
-      try {
-        const response = await fetchApi("/orders");
-        if (response.success && response.data) {
-          const formattedOrders = response.data.map((order: any) => ({
-            id: order.orderNo,
-            orderNo: order.orderNo,
-            table: order.table?.name || "Takeaway",
-            items: order.items?.length || 0,
-            total: `₹${Number(order.total || 0).toFixed(2)}`,
-            status: order.status,
-            time: new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            server: order.user?.name || "System"
-          }));
-          setOrders(formattedOrders);
-        }
-      } catch (error) {
-        console.error("Failed to load orders", error);
-      } finally {
-        setLoading(false);
+  const fetchOrders = async () => {
+    try {
+      const response = await apiFetch("/orders");
+      if (response.success && response.data) {
+        const formatted = response.data.map((order: any) => ({
+          id: order.orderNo,
+          table: order.table?.name || "Takeaway",
+          server: order.employee?.name || order.user?.name || "System",
+          items: order.items?.length || 0,
+          total: `₹${Number(order.total || 0).toFixed(2)}`,
+          status: order.status,
+          time: new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          _raw: order,
+        }));
+        setOrders(formatted);
       }
+    } catch (error) {
+      console.error("Failed to load orders", error);
+    } finally {
+      setLoading(false);
     }
-    loadOrders();
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    const channel = supabase.channel('orders-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'Order' }, () => fetchOrders())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, []);
+
+  const updateStatus = async (orderNo: string, status: string) => {
+    await apiPut(`/orders/${orderNo}/status`, { status });
+    fetchOrders();
+  };
+
+  const statusTransitions: Record<string, string> = {
+    QUEUED: "PREPARING",
+    PREPARING: "READY",
+    READY: "COMPLETED",
+    COMPLETED: "COMPLETED",
+    CANCELLED: "CANCELLED",
+  };
 
   const filtered = orders.filter(
     (o) =>
       (activeFilter === "All" || o.status === activeFilter) &&
-      (o.id.toLowerCase().includes(search.toLowerCase()) ||
-        o.table.toLowerCase().includes(search.toLowerCase()))
+      (o.id.toLowerCase().includes(search.toLowerCase()) || o.table.toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
-    <div className="min-h-screen bg-surface-950">
-      <header className="flex items-center gap-4 border-b border-border px-6 py-4">
-        <Link
-          href="/dashboard"
-          className="rounded-xl p-2 text-text-muted transition-colors hover:bg-[var(--glass-border)] hover:text-brand-primary"
-        >
-          <HiOutlineArrowLeft className="h-5 w-5" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <HiOutlineClipboardDocumentList className="h-5 w-5 text-brand-400" />
-          <h1 className="text-lg font-bold text-text-primary">Orders</h1>
-        </div>
+    <div className="min-h-screen bg-cafe-bg">
+      <header className="flex items-center gap-4 border-b border-cafe-border px-4 lg:px-6 py-4 bg-cafe-cream/40">
+        <Link href="/dashboard" className="rounded-btn p-2 text-cafe-text-secondary hover:text-cafe-accent"><LuArrowLeft className="h-5 w-5" /></Link>
+        <div className="flex items-center gap-2"><LuClipboardList className="h-5 w-5 text-cafe-accent" /><h1 className="text-lg text-cafe-text">Orders</h1></div>
       </header>
 
-      <div className="p-6">
-        {/* Filters */}
+      <div className="p-4 lg:p-6">
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-[var(--glass-secondary)] p-1">
+          <div className="flex gap-1.5 overflow-x-auto rounded-xl bg-cafe-cream/60 p-1">
             {filters.map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveFilter(f)}
-                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
-                  activeFilter === f
-                    ? "bg-brand-500/20 text-brand-400"
-                    : "text-text-muted hover:text-brand-primary"
-                }`}
-              >
+              <button key={f} onClick={() => setActiveFilter(f)}
+                className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${activeFilter === f ? "bg-cafe-accent/10 text-cafe-accent" : "text-cafe-text-secondary hover:text-cafe-text"}`}>
                 {f}
               </button>
             ))}
           </div>
           <div className="relative ml-auto">
-            <HiOutlineMagnifyingGlass className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              placeholder="Search orders..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="rounded-xl border border-border bg-[var(--glass-secondary)] py-2 pl-10 pr-4 text-sm text-text-primary placeholder-surface-500 outline-none focus:border-brand-500/50"
-            />
+            <LuSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cafe-text-secondary/50" />
+            <input type="text" placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field pl-10 py-2 text-sm" />
           </div>
         </div>
 
-        {/* Orders Table */}
-        <div className="glass-card overflow-hidden">
+        <div className="glass-panel overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm font-sans">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="px-5 py-4 font-medium text-text-muted">Order</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Table</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Server</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Items</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Total</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Status</th>
-                  <th className="px-5 py-4 font-medium text-text-muted">Time</th>
+                <tr className="border-b border-cafe-border">
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Order</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Table</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Server</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Items</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Total</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Status</th>
+                  <th className="px-4 lg:px-5 py-4 font-medium text-cafe-text-secondary text-xs uppercase">Time</th>
+                  <th className="px-4 lg:px-5 py-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-cafe-border/50">
                 {loading ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-text-muted">
-                      Loading orders...
-                    </td>
-                  </tr>
+                  <tr><td colSpan={8} className="px-5 py-8 text-center text-cafe-text-secondary">Loading...</td></tr>
                 ) : filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-text-muted">
-                      <div className="flex flex-col items-center justify-center">
-                        <HiOutlineClipboardDocumentList className="mb-3 h-10 w-10 opacity-30" />
-                        <p className="text-sm">No orders found</p>
-                      </div>
-                    </td>
-                  </tr>
+                  <tr><td colSpan={8} className="px-5 py-12 text-center text-cafe-text-secondary"><LuClipboardList className="mx-auto mb-3 h-10 w-10 opacity-30" /><p className="text-sm">No orders found</p></td></tr>
                 ) : (
                   filtered.map((order) => (
-                    <tr key={order.id} className="text-text-secondary transition-colors hover:bg-[var(--glass-border)]">
-                      <td className="px-5 py-4 font-medium text-text-primary">{order.id}</td>
-                      <td className="px-5 py-4">{order.table}</td>
-                      <td className="px-5 py-4">{order.server}</td>
-                      <td className="px-5 py-4">{order.items} items</td>
-                      <td className="px-5 py-4 font-medium text-text-primary">{order.total}</td>
-                      <td className="px-5 py-4">
-                        <span
-                          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            statusColors[order.status] || "bg-surface-500/15 text-text-muted"
-                          }`}
-                        >
+                    <tr key={order.id} className="text-cafe-text-secondary hover:bg-cafe-cream/30 transition-colors">
+                      <td className="px-4 lg:px-5 py-4 font-medium text-cafe-text">{order.id}</td>
+                      <td className="px-4 lg:px-5 py-4">{order.table}</td>
+                      <td className="px-4 lg:px-5 py-4">{order.server}</td>
+                      <td className="px-4 lg:px-5 py-4">{order.items}</td>
+                      <td className="px-4 lg:px-5 py-4 font-medium text-cafe-text mono-nums">{order.total}</td>
+                      <td className="px-4 lg:px-5 py-4">
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[order.status] || "bg-gray-500/15 text-gray-400"}`}>
                           {order.status}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-text-muted">{order.time}</td>
+                      <td className="px-4 lg:px-5 py-4 text-cafe-text-secondary">{order.time}</td>
+                      <td className="px-4 lg:px-5 py-4">
+                        {statusTransitions[order.status] && order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
+                          <button onClick={() => updateStatus(order.id, statusTransitions[order.status])}
+                            className="btn-secondary !py-1 !px-2 !text-xs">Advance</button>
+                        )}
+                      </td>
                     </tr>
                   ))
                 )}

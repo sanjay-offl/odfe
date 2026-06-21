@@ -48,6 +48,7 @@ const config: Config = {
         "fade-in": "fadeIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "fade-up": "fadeUp 0.32s cubic-bezier(0.22, 1, 0.36, 1) forwards",
         "scale-in": "scaleIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards",
+        "marquee": "marquee 20s linear infinite",
       },
       keyframes: {
         fadeIn: {
@@ -61,6 +62,10 @@ const config: Config = {
         scaleIn: {
           "0%": { opacity: "0", transform: "scale(0.98)" },
           "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-100%)" },
         },
       },
     },

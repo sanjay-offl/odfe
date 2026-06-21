@@ -2,33 +2,25 @@ import React, { memo } from "react";
 import Link from "next/link";
 
 interface LogoProps {
-  size?: number;
+  height?: number;
   linked?: boolean;
   className?: string;
-  showText?: boolean;
 }
 
 function LogoComponent({
-  size = 42,
+  height = 42,
   linked = true,
   className = "",
-  showText = false,
 }: LogoProps) {
   const logo = (
-    <div className={`inline-flex items-center gap-3 ${className}`}>
+    <div className={`inline-flex items-center justify-center ${className}`} style={{ width: height * 2.5, height }}>
       <img
-        src="/dark_logo.jpeg"
-        alt="ODFE"
-        width={size}
-        height={size}
-        className="rounded-xl object-contain"
+        src="/light_logo.jpeg"
+        alt="ODFE Cafe"
+        style={{ height: `${height}px`, width: "auto" }}
+        className="mix-blend-multiply scale-[3] pointer-events-none"
         draggable={false}
       />
-      {showText && (
-        <span className="text-xl font-bold tracking-tight text-cafe-text font-display">
-          ODFE
-        </span>
-      )}
     </div>
   );
 

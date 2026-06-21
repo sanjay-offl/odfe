@@ -34,7 +34,7 @@ export default function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-            <Logo size={38} showText linked={false} />
+            <Logo height={38} linked={false} />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-cafe-text-secondary font-sans">
               The premium cafe management platform built on Odoo 19.
             </p>

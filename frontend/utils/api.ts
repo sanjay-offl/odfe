@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
@@ -8,12 +8,11 @@ function getCookie(name: string): string | null {
   return null;
 }
 
-import { supabase } from './supabaseClient';
+import { getToken, clearToken } from './token';
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  
+  const token = getToken();
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
@@ -35,8 +34,7 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   });
 
   if (response.status === 401) {
-    // Handle unauthorized / token expiration
-    await supabase.auth.signOut();
+    clearToken();
     if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
       window.location.href = '/login';
     }

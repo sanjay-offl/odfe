@@ -11,45 +11,82 @@ export const createOrder = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const { items, total, paymentMethod } = req.body;
+    const { items, subtotal, tax, total, paymentMethod, tableId, customerId } = req.body;
     
-    // Fallback response for unmigrated DB
-    let orderNo = `ORD-${Math.floor(Math.random() * 10000)}`;
+    let orderNo = `ORD-${Math.floor(Math.random() * 100000)}`;
 
-    try {
-      const newOrder = await (prisma as any).order.create({
+    const user = (req as any).user;
+    if (!user) {
+      res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: "Unauthorized" });
+      return;
+    }
+
+    let adminId = user.id;
+    let employeeId: string | null = null;
+    const emp = await prisma.employee.findUnique({ where: { userId: user.id } });
+    if (emp) {
+      adminId = emp.adminId;
+      employeeId = emp.id;
+    }
+
+    const newOrder = await prisma.$transaction(async (tx) => {
+      const order = await tx.order.create({
         data: {
           orderNo,
-          total,
-          status: 'QUEUED',
-          userId: (req as any).user?.id,
+          adminId,
+          status: paymentMethod === 'CASH' || paymentMethod === 'CARD' || paymentMethod === 'UPI' ? 'QUEUED' : 'PENDING',
+          subtotal: subtotal || 0,
+          tax: tax || 0,
+          total: total || 0,
+          tableId: tableId || null,
+          customerId: customerId || null,
+          employeeId: employeeId || null,
           items: {
             create: items.map((item: any) => ({
               productId: item.productId,
               quantity: item.quantity,
-              price: item.price
+              price: item.price,
+              lineTotal: (item.price * item.quantity) * 1.05,
+              notes: item.notes
             }))
           },
           payments: {
             create: [{
-              amount: total,
-              method: paymentMethod || 'cash',
-              status: 'completed'
+              amount: total || 0,
+              paymentMethod: paymentMethod || 'CASH',
+              status: 'COMPLETED'
             }]
           }
         }
       });
-      orderNo = newOrder.orderNo;
-    } catch (dbError) {
-      console.log('Using fallback DB for order creation');
-    }
+
+      // @ts-ignore
+      await tx.kitchenOrder.create({
+        data: {
+          orderId: order.id,
+          // @ts-ignore
+          adminId,
+          status: 'TO_COOK',
+        }
+      });
+
+      await tx.receipt.create({
+        data: {
+          orderId: order.id,
+          receiptNo: `REC-${Math.floor(Math.random() * 100000)}`,
+        }
+      });
+
+      return order;
+    });
 
     const response: ApiResponse = {
       success: true,
       message: "Order created successfully",
       data: {
-        orderNo,
-        status: "QUEUED"
+        id: newOrder.id,
+        orderNo: newOrder.orderNo,
+        status: newOrder.status
       },
     };
 
@@ -65,19 +102,26 @@ export const getOrders = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    let orders = [];
-    
-    try {
-      orders = await (prisma as any).order.findMany({
-        include: { items: { include: { product: true } }, table: true },
-        orderBy: { createdAt: 'desc' }
-      });
-    } catch (dbError) {
-      orders = [
-        { id: "1", orderNo: "ORD-1234", status: "BREWING", total: 67.50, items: [] },
-        { id: "2", orderNo: "ORD-1233", status: "SERVED", total: 34.00, items: [] },
-      ] as any;
+    const userId = (req as any).user?.id;
+    let adminId = userId;
+    const emp = await prisma.employee.findUnique({ where: { userId } });
+    if (emp) {
+      adminId = emp.adminId;
     }
+
+    const orders = await prisma.order.findMany({
+      where: { adminId },
+      include: {
+        items: { include: { product: true } },
+        table: true,
+        customer: true,
+        employee: true,
+        kitchenOrders: true,
+        payments: true,
+        receipts: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     const response: ApiResponse = {
       success: true,
@@ -99,20 +143,31 @@ export const updateOrderStatus = async (
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    try {
-      await (prisma as any).order.update({
-        where: { orderNo: id },
-        data: { status }
-      });
-    } catch (dbError) {
-      console.log('Using fallback DB for order status update');
+    const userId = (req as any).user?.id;
+    let adminId = userId;
+    const emp = await prisma.employee.findUnique({ where: { userId } });
+    if (emp) {
+      adminId = emp.adminId;
     }
+
+    const order = await prisma.order.findFirst({
+      where: { orderNo: id, adminId },
+    });
+
+    if (!order) {
+      res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: "Order not found" });
+      return;
+    }
+
+    const updated = await prisma.order.update({
+      where: { id: order.id },
+      data: { status: status as any }
+    });
 
     const response: ApiResponse = {
       success: true,
       message: "Order status updated",
-      data: { id, status }
+      data: updated,
     };
     res.status(HTTP_STATUS.OK).json(response);
   } catch (error) {

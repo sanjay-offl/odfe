@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { LuArrowLeft, LuCreditCard, LuBanknote, LuSmartphone, LuWallet, LuSearch } from "react-icons/lu";
-import { apiFetch } from "@/utils/useApi";
+import { apiFetch, apiPost } from "@/utils/useApi";
 
 export default function PaymentsPage() {
   const [methods, setMethods] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [payingOrder, setPayingOrder] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -18,6 +20,7 @@ export default function PaymentsPage() {
       ]);
       if (methodsRes.success) setMethods(methodsRes.data || []);
       if (ordersRes.success && ordersRes.data) {
+        setPendingOrders(ordersRes.data.filter((o: any) => o.status === "PENDING"));
         const txns = ordersRes.data
           .filter((o: any) => o.payments?.length > 0)
           .slice(0, 20)
@@ -37,6 +40,44 @@ export default function PaymentsPage() {
     };
     load();
   }, []);
+
+  const handlePay = async (orderId: string, amount: number, method: string = "CASH") => {
+    setPayingOrder(orderId);
+    try {
+      const res = await apiPost("/payments/transactions", {
+        orderId,
+        amount,
+        paymentMethod: method,
+      });
+      if (res.success) {
+        const ordersRes = await apiFetch("/orders");
+        if (ordersRes.success && ordersRes.data) {
+          setPendingOrders(ordersRes.data.filter((o: any) => o.status === "PENDING"));
+          const txns = ordersRes.data
+            .filter((o: any) => o.payments?.length > 0)
+            .slice(0, 20)
+            .flatMap((o: any) =>
+              (o.payments || []).map((p: any) => ({
+                id: p.id || o.orderNo,
+                orderId: o.orderNo,
+                method: p.paymentMethod || "Unknown",
+                amount: `₹${Number(p.amount || 0).toFixed(2)}`,
+                status: p.status || "PENDING",
+                time: new Date(p.createdAt || o.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              }))
+            );
+          setTransactions(txns);
+        }
+      } else {
+        alert("Payment failed: " + res.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Payment failed");
+    } finally {
+      setPayingOrder(null);
+    }
+  };
 
   const methodIcons: Record<string, any> = {
     CASH: LuBanknote,
@@ -92,6 +133,51 @@ export default function PaymentsPage() {
                   );
                 })
               )}
+          </div>
+        </div>
+
+        <div className="glass-panel overflow-hidden mb-8">
+          <div className="border-b border-cafe-border px-5 py-4 flex justify-between items-center">
+            <h2 className="text-base text-cafe-text">Pending Orders</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm font-sans">
+              <thead>
+                <tr className="border-b border-cafe-border">
+                  <th className="px-5 py-3 font-medium text-cafe-text-secondary text-xs uppercase">Order</th>
+                  <th className="px-5 py-3 font-medium text-cafe-text-secondary text-xs uppercase">Customer</th>
+                  <th className="px-5 py-3 font-medium text-cafe-text-secondary text-xs uppercase">Total</th>
+                  <th className="px-5 py-3 font-medium text-cafe-text-secondary text-xs uppercase">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-cafe-border/50">
+                {loading ? (
+                  <tr><td colSpan={4} className="px-5 py-8 text-center text-cafe-text-secondary">Loading...</td></tr>
+                ) : pendingOrders.length === 0 ? (
+                  <tr><td colSpan={4} className="px-5 py-12 text-center text-cafe-text-secondary">No pending orders</td></tr>
+                ) : (
+                  pendingOrders.map((order, i) => {
+                    const total = order.items?.reduce((acc: number, it: any) => acc + (it.price * it.quantity), 0) || 0;
+                    return (
+                      <tr key={order.id || i} className="text-cafe-text-secondary hover:bg-cafe-cream/30 transition-colors">
+                        <td className="px-5 py-3 font-medium text-cafe-text">{order.orderNo}</td>
+                        <td className="px-5 py-3">{order.customer?.name || "Walk-in"}</td>
+                        <td className="px-5 py-3 font-medium text-cafe-text mono-nums">₹{Number(total).toFixed(2)}</td>
+                        <td className="px-5 py-3">
+                          <button 
+                            onClick={() => handlePay(order.id, total, "CASH")}
+                            disabled={payingOrder === order.id}
+                            className="bg-cafe-accent text-cafe-cream px-3 py-1 rounded hover:bg-cafe-accent/80 disabled:opacity-50"
+                          >
+                            {payingOrder === order.id ? "Processing..." : "Pay (Cash)"}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 

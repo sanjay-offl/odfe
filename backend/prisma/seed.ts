@@ -3,15 +3,11 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import ws from 'ws';
+import bcrypt from 'bcrypt';
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const prisma = new PrismaClient();
-const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_ANON_KEY || '',
-  { auth: { persistSession: false }, realtime: { transport: ws as any } }
-);
 
 const supabaseAdmin = createClient(
   process.env.SUPABASE_URL || '',
@@ -20,11 +16,11 @@ const supabaseAdmin = createClient(
 );
 
 async function upsertSupabaseUser(email: string, password: string, name: string, fallbackId: string): Promise<string> {
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY is required to create auth users via Admin API.');
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.SUPABASE_URL) {
+    console.warn(`⚠️  Supabase not configured — using fallback ID for ${email}`);
+    return fallbackId;
   }
   
-  // Try to find the user first
   let userId = '';
   try {
     const { data: { users }, error: listError } = await supabaseAdmin.auth.admin.listUsers();
@@ -32,10 +28,12 @@ async function upsertSupabaseUser(email: string, password: string, name: string,
       const existingUser = users.find(u => u.email === email);
       if (existingUser) userId = existingUser.id;
     }
-  } catch (_) {}
+  } catch (_) {
+    console.warn(`⚠️  Supabase unreachable — using fallback ID for ${email}`);
+    return fallbackId;
+  }
 
   if (userId) {
-    // Update existing user's password and metadata to ensure they can login
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
       password,
       user_metadata: { full_name: name },
@@ -43,7 +41,6 @@ async function upsertSupabaseUser(email: string, password: string, name: string,
     });
     if (updateError) console.error(`Error updating user ${email}:`, updateError.message);
   } else {
-    // Create new user
     const { data: createData, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -63,11 +60,14 @@ async function main() {
   console.log('🌱 Starting ODFE seed...');
 
   // ── 1. ADMIN ──────────────────────────────────────────────────────────────
+  const adminPass = await bcrypt.hash('Admin@123', 10);
   const adminId = await upsertSupabaseUser('admin@odfe.local', 'Admin@123', 'ODFE Admin', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
   const admin = await prisma.user.upsert({
     where: { email: 'admin@odfe.local' },
-    update: { name: 'ODFE Admin', role: 'ADMIN', plan: 'PRO', isActive: true },
-    create: { id: adminId, email: 'admin@odfe.local', name: 'ODFE Admin', role: 'ADMIN', plan: 'PRO', isActive: true },
+    // @ts-ignore
+    update: { name: 'ODFE Admin', role: 'ADMIN', plan: 'PRO', isActive: true, password: adminPass },
+    // @ts-ignore
+    create: { id: adminId, email: 'admin@odfe.local', name: 'ODFE Admin', role: 'ADMIN', plan: 'PRO', isActive: true, password: adminPass },
   });
   await prisma.businessSetting.upsert({
     where: { adminId: admin.id },
@@ -91,11 +91,14 @@ async function main() {
 
   const employeeRecords: any[] = [];
   for (const emp of empData) {
+    const empPass = await bcrypt.hash(emp.pass, 10);
     const uid = await upsertSupabaseUser(emp.email, emp.pass, emp.name, emp.fid);
     const u = await prisma.user.upsert({
       where: { email: emp.email },
-      update: { name: emp.name, role: 'EMPLOYEE' },
-      create: { id: uid, email: emp.email, name: emp.name, role: 'EMPLOYEE', plan: 'FREE' },
+      // @ts-ignore
+      update: { name: emp.name, role: 'EMPLOYEE', password: empPass },
+      // @ts-ignore
+      create: { id: uid, email: emp.email, name: emp.name, role: 'EMPLOYEE', plan: 'FREE', password: empPass },
     });
     const e = await prisma.employee.upsert({
       where: { email: emp.email },
@@ -352,7 +355,8 @@ async function main() {
         await prisma.receipt.create({ data: { orderId: order.id, receiptNo: `REC-${10000 + orderIdx}` } });
       }
       if (statusStr === 'QUEUED' || statusStr === 'PREPARING') {
-        await prisma.kitchenOrder.create({ data: { orderId: order.id, status: statusStr === 'QUEUED' ? 'TO_COOK' : 'PREPARING' } });
+        // @ts-ignore
+        await prisma.kitchenOrder.create({ data: { orderId: order.id, adminId: admin.id, status: statusStr === 'QUEUED' ? 'TO_COOK' : 'PREPARING' } });
       }
       orderIdx++;
     };

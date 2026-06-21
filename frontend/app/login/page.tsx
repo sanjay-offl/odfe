@@ -9,28 +9,10 @@ import {
 import { FcGoogle } from "react-icons/fc";
 import Logo from "@/components/Logo";
 import { useAuth } from "@/context/AuthContext";
-import { apiPost } from "@/utils/useApi";
-import { supabase } from "../../utils/supabaseClient";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
-
-function setCookie(name: string, value: string, days = 7) {
-  if (typeof document === "undefined") return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax`;
-}
-
-function getDeptRedirect(dept: string): string {
-  const d = dept.toLowerCase();
-  if (d === "kitchen") return "/kitchen";
-  if (d === "orders") return "/orders";
-  if (d === "billing") return "/payments";
-  return "/pos"; // Cashier default
-}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { isAuthenticated, role, profile } = useAuth();
+  const { isAuthenticated, role, profile, login, signup } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isRegister, setIsRegister] = useState(false);
@@ -46,14 +28,13 @@ export default function LoginPage() {
     cafeName: "",
   });
 
-  // Already authenticated → go to correct dashboard
   useEffect(() => {
     if (isAuthenticated && role) {
       if (role === "ADMIN") {
         router.replace("/dashboard");
       } else if (role === "EMPLOYEE") {
         const dept = profile?.department || (typeof window !== "undefined" ? localStorage.getItem("odfe_dept") || "" : "");
-        router.replace(getDeptRedirect(dept));
+        router.replace(dept.toLowerCase() === "kitchen" ? "/kitchen" : dept.toLowerCase() === "orders" ? "/orders" : dept.toLowerCase() === "billing" ? "/payments" : "/pos");
       } else {
         router.replace("/self-order");
       }
@@ -64,46 +45,6 @@ export default function LoginPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const getAuthErrorMessage = (err: any) => {
-    if (!err) return "An unexpected error occurred";
-    const msg = err.message || "";
-    const code = err.code || "";
-    const status = err.status;
-
-    if (msg.includes("Email not confirmed") || code === "email_not_confirmed") {
-      return "Email not confirmed. In Supabase Dashboard → Authentication → Providers → Email → disable 'Confirm Email'.";
-    }
-    if (msg.includes("Invalid login credentials") || code === "invalid_credentials") {
-      return "Invalid email or password. Make sure demo accounts are seeded (run: npx prisma db seed).";
-    }
-    if (msg.includes("User already registered") || code === "user_already_exists") {
-      return "An account with this email already exists. Please sign in.";
-    }
-    if (msg.includes("Password should be at least") || code === "weak_password") {
-      return "Password is too weak. Please use a stronger password.";
-    }
-    if (status === 429 || msg.includes("rate limit") || code === "over_email_send_rate_limit") {
-      return "Too many requests. Please try again in a moment.";
-    }
-    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
-      return "Network error. Please check your connection.";
-    }
-    return msg;
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setError(null);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/dashboard` },
-      });
-      if (error) throw error;
-    } catch (err: any) {
-      setError(getAuthErrorMessage(err));
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -111,121 +52,30 @@ export default function LoginPage() {
     setSuccessMessage(null);
 
     try {
-      // ── Forgot Password ──────────────────────────────────────────────────────
       if (isForgotPassword) {
-        const { error } = await supabase.auth.resetPasswordForEmail(formData.email);
-        if (error) throw error;
-        setSuccessMessage("Password reset link sent! Check your inbox.");
+        setError("Password reset is handled via the backend. Please use Sign In.");
         setIsLoading(false);
         return;
       }
 
-      // ── Register ─────────────────────────────────────────────────────────────
       if (isRegister) {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            data: { full_name: formData.name, cafe_name: formData.cafeName || "" },
-          },
-        });
-
-        if (error) throw error;
-
-        if (data.user?.identities && data.user.identities.length === 0) {
-          throw new Error("User already registered");
-        }
-
-        if (data.user) {
-          await apiPost("/auth/signup", {
-            id: data.user.id,
-            email: formData.email,
-            name: formData.name,
-            cafeName: formData.cafeName,
-          });
-        }
-
-        if (data.session) {
-          await supabase.auth.signOut();
-        }
-
-        setIsRegister(false);
-        setFormData((prev) => ({ ...prev, password: "" }));
-        setSuccessMessage("Registration successful! You can now sign in.");
-        setIsLoading(false);
-        return;
-      }
-
-      // ── Sign In ──────────────────────────────────────────────────────────────
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      if (error) throw error;
-
-      if (!data.session) {
-        throw new Error("Login failed: no session returned.");
-      }
-
-      // Fetch profile from backend to get role & department
-      const profileRes = await fetch(`${API_BASE}/auth/profile`, {
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${data.session.access_token}`,
-        },
-      });
-
-      let userRole = "ADMIN";
-      let dept = "";
-
-      if (profileRes.ok) {
-        const json = await profileRes.json();
-        if (json.success && json.data) {
-          userRole = json.data.role || "ADMIN";
-          dept = json.data.employeeProfile?.position || "";
-
-          // Persist for subsequent requests
-          if (typeof window !== "undefined") {
-            localStorage.setItem("odfe_role", userRole);
-            localStorage.setItem("odfe_name", json.data.name || "User");
-            if (dept) localStorage.setItem("odfe_dept", dept);
-          }
-
-          // Set cookies so middleware can redirect server-side
-          setCookie("odfe_role", userRole);
-          if (dept) setCookie("odfe_dept", dept);
+        const result = await signup(formData.name || "Cafe Owner", formData.email, formData.password);
+        if (!result.success) {
+          setError(result.message || "Sign up failed");
+        } else {
+          setIsRegister(false);
+          setSuccessMessage("Your account has been created. Please check your email and verify your address before logging in.");
+          setFormData((prev) => ({ ...prev, password: "" })); // Clear password, keep email
         }
       } else {
-        // Profile not found (user not seeded yet) — use email heuristic
-        const email = formData.email.toLowerCase();
-        if (email.includes("admin")) userRole = "ADMIN";
-        else {
-          userRole = "EMPLOYEE";
-          if (email.includes("kitchen")) dept = "Kitchen";
-          else if (email.includes("billing")) dept = "Billing";
-          else if (email.includes("cashier2") || email.includes("orders")) dept = "Orders";
-          else dept = "Cashier";
-        }
+        const result = await login(formData.email, formData.password);
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem("odfe_role", userRole);
-          if (dept) localStorage.setItem("odfe_dept", dept);
+        if (!result.success) {
+          setError(result.message || "Login failed");
         }
-        setCookie("odfe_role", userRole);
-        if (dept) setCookie("odfe_dept", dept);
-      }
-
-      // Navigate to role-based home
-      if (userRole === "ADMIN") {
-        router.replace("/dashboard");
-      } else if (userRole === "EMPLOYEE") {
-        router.replace(getDeptRedirect(dept));
-      } else {
-        router.replace("/self-order");
       }
     } catch (err: any) {
-      setError(getAuthErrorMessage(err));
+      setError(err.message || "An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -363,24 +213,11 @@ export default function LoginPage() {
           </form>
 
           {!isForgotPassword && (
-            <>
-              <div className="mt-6 flex items-center justify-center gap-4">
-                <div className="flex-1 border-t border-cafe-border" />
-                <span className="text-sm font-sans text-cafe-text-secondary">Or continue with</span>
-                <div className="flex-1 border-t border-cafe-border" />
-              </div>
-
-              <div className="mt-6">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  className="flex w-full items-center justify-center gap-3 rounded-btn border border-cafe-border bg-cafe-surface/30 px-4 py-3 text-sm font-medium text-cafe-text font-sans transition-all hover:bg-cafe-surface/50"
-                >
-                  <FcGoogle className="h-5 w-5" />
-                  Google
-                </button>
-              </div>
-            </>
+            <div className="mt-6 flex items-center justify-center gap-4">
+              <div className="flex-1 border-t border-cafe-border" />
+              <span className="text-sm font-sans text-cafe-text-secondary">Or continue with</span>
+              <div className="flex-1 border-t border-cafe-border" />
+            </div>
           )}
 
           <div className="mt-6 text-center">

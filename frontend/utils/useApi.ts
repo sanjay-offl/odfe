@@ -1,21 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from './supabaseClient';
+import { getToken, clearToken } from './token';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-
-async function getToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession();
-  return data.session?.access_token || null;
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 export async function apiFetch<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<{ success: boolean; data?: T; message?: string; error?: string }> {
   try {
-    const token = await getToken();
+    const token = getToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...(options.headers as Record<string, string>),
@@ -30,7 +25,7 @@ export async function apiFetch<T = any>(
     });
 
     if (response.status === 401) {
-      await supabase.auth.signOut();
+      clearToken();
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

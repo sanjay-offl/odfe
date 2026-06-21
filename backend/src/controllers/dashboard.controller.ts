@@ -6,90 +6,151 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export const getDashboardData = async (
-  _req: Request,
+  req: Request,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
   try {
-    // In a real app, you would query the database to get actual aggregates.
-    // Due to the sandbox limitations, we will simulate the dashboard data using Prisma
-    // or return static data if the DB is empty.
+    const userId = (req as any).user?.id;
+    let adminId = userId;
+    const emp = await prisma.employee.findUnique({ where: { userId } });
+    if (emp) {
+      adminId = emp.adminId;
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Try to get actual orders for today
-    let ordersCount = 0;
-    let totalRevenue = 0;
-    let activeTablesCount = 0;
-    let totalTablesCount = 24;
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    try {
-      const orders = await (prisma as any).order.findMany({
-        where: {
-          createdAt: {
-            gte: today,
-          },
-        },
-        include: {
-          items: true,
-          table: true
-        }
-      });
+    const todayOrders = await prisma.order.findMany({
+      where: {
+        adminId,
+        createdAt: { gte: today },
+      },
+    });
 
-      ordersCount = orders.length;
-      totalRevenue = orders.reduce((acc: number, order: any) => acc + order.total, 0);
-      
-      const tables = await (prisma as any).table.findMany();
-      totalTablesCount = tables.length || 24;
-      activeTablesCount = tables.filter((t: any) => t.status === 'occupied').length;
+    const ordersCount = todayOrders.length;
+    const totalRevenue = todayOrders.reduce((acc, order) => acc + order.total, 0);
+    const avgOrder = ordersCount > 0 ? (totalRevenue / ordersCount).toFixed(2) : "0";
 
-    } catch (dbError) {
-      // Fallback if DB is not set up
-      ordersCount = 284;
-      totalRevenue = 12458;
-      activeTablesCount = 18;
-    }
+    const tables = await prisma.table.findMany({ where: { adminId } });
+    const totalTablesCount = tables.length || 0;
+    const activeTablesCount = tables.filter((t) => t.status === "OCCUPIED").length;
 
-    const avgOrder = ordersCount > 0 ? (totalRevenue / ordersCount).toFixed(2) : "43.87";
+    const totalCustomers = await prisma.customer.count({ where: { adminId } });
+    const totalEmployees = await prisma.employee.count({ where: { adminId, status: 'Active' } });
+    const totalProducts = await prisma.product.count({ where: { adminId } });
+    const totalBookings = await prisma.booking.count({ where: { adminId } });
 
     const kpis = [
-      { label: "Today's Revenue", value: `₹${totalRevenue.toLocaleString()}`, change: "+12.5%", up: true },
-      { label: "Orders", value: ordersCount.toString(), change: "+8.2%", up: true },
-      { label: "Avg Order", value: `₹${avgOrder}`, change: "+3.1%", up: true },
-      { label: "Active Tables", value: `${activeTablesCount}/${totalTablesCount}`, change: "75%", up: true },
+      { label: "Today's Revenue", value: `₹${totalRevenue.toLocaleString()}`, change: "+0%", up: true },
+      { label: "Orders Today", value: ordersCount.toString(), change: "+0%", up: true },
+      { label: "Avg Order Value", value: `₹${avgOrder}`, change: "+0%", up: true },
+      { label: "Active Tables", value: `${activeTablesCount}/${totalTablesCount}`, change: "0%", up: true },
     ];
 
-    let recentOrders: any[] = [];
-    
-    try {
-      const recent = await (prisma as any).order.findMany({
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { table: true, items: true }
-      });
-      recentOrders = recent.map((order: any) => ({
-        id: order.orderNo,
-        table: order.table?.name || "Takeaway",
-        items: order.items.reduce((acc: number, item: any) => acc + item.quantity, 0),
-        total: `₹${order.total.toFixed(2)}`,
-        status: order.status.charAt(0) + order.status.slice(1).toLowerCase(),
+    const recentOrdersRaw = await prisma.order.findMany({
+      where: { adminId },
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: { table: true, items: true }
+    });
+
+    const recentOrders = recentOrdersRaw.map((order) => ({
+      id: order.orderNo,
+      table: order.table?.name || "Takeaway",
+      items: order.items.reduce((acc, item) => acc + item.quantity, 0),
+      total: `₹${order.total.toFixed(2)}`,
+      status: order.status,
+    }));
+
+    const lowStockInventory = await prisma.inventory.findMany({
+      where: {
+        adminId,
+        stock: { lte: 10 }
+      },
+      include: { product: true },
+      orderBy: { stock: 'asc' },
+      take: 8,
+    });
+
+    const lowStock = lowStockInventory.map(inv => ({
+      name: inv.product.name,
+      stock: inv.stock,
+      minimumStock: inv.minimumStock,
+    }));
+
+    const orderItems = await prisma.orderItem.findMany({
+      where: {
+        order: {
+          adminId,
+          createdAt: { gte: thirtyDaysAgo }
+        }
+      },
+      include: { product: true }
+    });
+
+    const productCounts: Record<string, { name: string, count: number }> = {};
+    orderItems.forEach(item => {
+      if (!productCounts[item.productId]) {
+        productCounts[item.productId] = { name: item.product.name, count: 0 };
+      }
+      productCounts[item.productId].count += item.quantity;
+    });
+
+    const topProducts = Object.values(productCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+      .map(p => ({
+        name: p.name,
+        count: p.count,
+        percentage: Math.min((p.count / Math.max(ordersCount, 1)) * 100, 100)
       }));
-    } catch (dbError) {
-       recentOrders = [
-        { id: "#1234", table: "T-05", items: 4, total: "₹67.50", status: "Brewing" },
-        { id: "#1233", table: "T-12", items: 2, total: "₹34.00", status: "Served" },
-        { id: "#1232", table: "T-03", items: 6, total: "₹112.80", status: "Paid" },
-        { id: "#1231", table: "T-08", items: 3, total: "₹52.20", status: "Queued" },
-      ];
+
+    const ordersThirtyDays = await prisma.order.findMany({
+      where: {
+        adminId,
+        createdAt: { gte: thirtyDaysAgo }
+      },
+      select: { createdAt: true, total: true }
+    });
+
+    const revByDate: Record<string, number> = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      revByDate[dateStr] = 0;
     }
+
+    ordersThirtyDays.forEach(o => {
+      const dateStr = o.createdAt.toISOString().split('T')[0];
+      if (revByDate[dateStr] !== undefined) {
+        revByDate[dateStr] += o.total;
+      }
+    });
+
+    const revenueChart = Object.keys(revByDate).map(date => ({
+      date: date.substring(5).replace('-', '/'),
+      revenue: revByDate[date]
+    }));
 
     const response: ApiResponse = {
       success: true,
       message: "Dashboard data retrieved successfully",
       data: {
         kpis,
-        recentOrders
+        recentOrders,
+        topProducts,
+        lowStock,
+        revenueChart,
+        totalCustomers,
+        totalEmployees,
+        totalProducts,
+        totalTables: totalTablesCount,
+        totalBookings,
       },
     };
 

@@ -7,14 +7,8 @@ import { JWT_ACCESS_EXPIRES_IN } from "../constants";
 type SignOptionsExpiry = Exclude<jwt.SignOptions["expiresIn"], undefined>;
 
 export const generateAccessToken = (payload: Omit<IJWTPayload, "sessionId" | "iat" | "exp">): string => {
-  const tokenPayload: IJWTPayload = {
-    ...payload,
-    sessionId: uuidv4(),
-    iat: Math.floor(Date.now() / 1000),
-  };
-
   return jwt.sign(
-    { ...tokenPayload, iat: undefined },
+    { ...payload, sessionId: uuidv4() },
     config.jwtSecret,
     { expiresIn: (config.jwtAccessExpiresIn || JWT_ACCESS_EXPIRES_IN) as SignOptionsExpiry }
   );

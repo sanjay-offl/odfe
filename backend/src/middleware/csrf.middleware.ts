@@ -5,11 +5,18 @@ import { AppError } from "../utils/errors";
 const CSRF_COOKIE_NAME = "csrf-token";
 const CSRF_HEADER_NAME = "x-csrf-token";
 
+const CSRF_EXEMPT_PATHS = ['/auth/login', '/auth/signup', '/auth/forgot-password', '/auth/reset-password', '/auth/customer-token'];
+
 const isCsrfSafeMethod = (method: string): boolean => {
   return ["GET", "HEAD", "OPTIONS"].includes(method.toUpperCase());
 };
 
 export const csrfProtection = (req: Request, _res: Response, next: NextFunction): void => {
+  if (CSRF_EXEMPT_PATHS.some(p => req.path.endsWith(p))) {
+    next();
+    return;
+  }
+
   if (isCsrfSafeMethod(req.method)) {
     next();
     return;

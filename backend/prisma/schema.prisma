@@ -16,18 +16,25 @@ enum Role {
 enum OrderStatus {
   PENDING
   QUEUED
-  BREWING
+  PREPARING
   SERVED
-  PAID
+  COMPLETED
   CANCELLED
+}
+
+enum KitchenStatus {
+  TO_COOK
+  PREPARING
+  COMPLETED
 }
 
 model User {
   id                 String   @id @default(uuid()) @db.Uuid
   name               String   @db.VarChar(100)
   email              String   @unique @db.VarChar(255)
-  password           String   @db.VarChar(255)
+  password           String?  @db.VarChar(255)
   role               Role     @default(ADMIN)
+  plan               String?  @db.VarChar(50)
   isActive           Boolean  @default(true) @map("is_active")
   isArchived         Boolean  @default(false) @map("is_archived")
   emailVerified      Boolean  @default(false) @map("email_verified")
@@ -41,12 +48,100 @@ model User {
   refreshTokens      RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   auditLogs          AuditLog[]
+  sessions           Session[]
+  employees          Employee[] @relation("UserToEmployee")
+  managedEmployees   Employee[] @relation("AdminToEmployee")
+
+  businessSettings   BusinessSetting?
+  categories         Category[]
+  products           Product[]
+  inventories        Inventory[]
+  floors             Floor[]
+  tables             Table[]
+  qrCodes            QrCode[]
+  customers          Customer[]
+  coupons            Coupon[]
+  promotions         Promotion[]
   orders             Order[]
+  bookings           Booking[]
+  kitchenOrders      KitchenOrder[]
+  paymentMethods     PaymentMethod[]
 
   @@index([email])
   @@index([role])
   @@index([isActive])
   @@map("users")
+}
+
+model BusinessSetting {
+  id            String   @id @default(uuid()) @db.Uuid
+  adminId       String   @unique @map("admin_id") @db.Uuid
+  admin         User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  cafeName      String   @map("cafe_name") @db.VarChar(100)
+  currency      String   @db.VarChar(20)
+  timezone      String   @db.VarChar(50)
+  taxRate       Float    @map("tax_rate")
+  language      String   @db.VarChar(50)
+  receiptFooter String?  @map("receipt_footer") @db.Text
+  gstNumber     String?  @map("gst_number") @db.VarChar(50)
+  phone         String?  @db.VarChar(20)
+  address       String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("business_settings")
+}
+
+model Employee {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @unique @map("user_id") @db.Uuid
+  user        User      @relation("UserToEmployee", fields: [userId], references: [id], onDelete: Cascade)
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation("AdminToEmployee", fields: [adminId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(100)
+  email       String    @unique @db.VarChar(255)
+  employeeNo  String    @unique @map("employee_no") @db.VarChar(50)
+  position    String    @db.VarChar(50)
+  shift       String    @db.VarChar(50)
+  hourlyRate  Float?    @map("hourly_rate")
+  hireDate    DateTime  @map("hire_date")
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  orders      Order[]
+
+  @@index([adminId])
+  @@map("employees")
+}
+
+model PaymentMethod {
+  id        String    @id @default(uuid()) @db.Uuid
+  adminId   String    @map("admin_id") @db.Uuid
+  admin     User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  name      String    @db.VarChar(50)
+  upiId     String?   @map("upi_id") @db.VarChar(100)
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@unique([adminId, name])
+  @@map("payment_methods")
+}
+
+model Session {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String    @unique @db.VarChar(255)
+  openingCash Float?    @map("opening_cash")
+  openedAt    DateTime  @default(now()) @map("opened_at")
+  closedAt    DateTime? @map("closed_at")
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model RefreshToken {
@@ -94,23 +189,36 @@ model AuditLog {
 }
 
 model Category {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @db.VarChar(100)
-  color     String?   @db.VarChar(20)
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  color       String?   @db.VarChar(20)
+  icon        String?   @db.VarChar(50)
+  order       Int       @default(0)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
   products  Product[]
 
+  @@index([adminId])
   @@map("categories")
 }
 
 model Product {
   id          String    @id @default(uuid()) @db.Uuid
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
   name        String    @db.VarChar(100)
   description String?   @db.Text
   price       Float
+  costPrice   Float?    @map("cost_price")
+  taxRate     Float?    @map("tax_rate")
+  sku         String?   @db.VarChar(50)
+  barcode     String?   @db.VarChar(50)
   image       String?   @db.Text
   categoryId  String    @map("category_id") @db.Uuid
   category    Category  @relation(fields: [categoryId], references: [id])
@@ -119,69 +227,177 @@ model Product {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   orderItems  OrderItem[]
+  inventory   Inventory?
 
+  @@index([adminId])
   @@index([categoryId])
   @@map("products")
 }
 
+model Inventory {
+  id           String   @id @default(uuid()) @db.Uuid
+  adminId      String   @map("admin_id") @db.Uuid
+  admin        User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  productId    String   @unique @map("product_id") @db.Uuid
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  stock        Int      @default(0)
+  minimumStock Int      @default(10) @map("minimum_stock")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("inventories")
+}
+
 model Floor {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @db.VarChar(100)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id          String    @id @default(uuid()) @db.Uuid
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
 
-  tables    Table[]
+  tables      Table[]
 
+  @@index([adminId])
   @@map("floors")
 }
 
 model Table {
   id        String    @id @default(uuid()) @db.Uuid
+  adminId   String    @map("admin_id") @db.Uuid
+  admin     User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
   name      String    @db.VarChar(50)
   capacity  Int       @default(4)
   floorId   String    @map("floor_id") @db.Uuid
-  floor     Floor     @relation(fields: [floorId], references: [id])
-  status    String    @default("available") // available, occupied
+  floor     Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
+  status    String    @default("AVAILABLE")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
 
   orders    Order[]
+  bookings  Booking[]
+  qrCodes   QrCode[]
 
+  @@index([adminId])
   @@index([floorId])
   @@map("tables")
 }
 
+model QrCode {
+  id        String   @id @default(uuid()) @db.Uuid
+  adminId   String   @map("admin_id") @db.Uuid
+  admin     User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  tableId   String   @map("table_id") @db.Uuid
+  table     Table    @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  token     String   @unique @db.VarChar(100)
+  url       String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([adminId])
+  @@map("qr_codes")
+}
+
 model Customer {
-  id        String    @id @default(uuid()) @db.Uuid
-  name      String    @db.VarChar(100)
-  phone     String?   @db.VarChar(20)
-  email     String?   @db.VarChar(255)
-  loyalty   Int       @default(0)
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
+  id         String    @id @default(uuid()) @db.Uuid
+  adminId    String    @map("admin_id") @db.Uuid
+  admin      User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  name       String    @db.VarChar(100)
+  phone      String?   @db.VarChar(20)
+  email      String?   @db.VarChar(255)
+  address    String?   @db.Text
+  birthday   DateTime? @db.Date
+  loyalty    Int       @default(0)
+  visitCount Int       @default(0) @map("visit_count")
+  totalSpent Float     @default(0) @map("total_spent")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+  deletedAt  DateTime? @map("deleted_at")
 
-  orders    Order[]
+  orders     Order[]
+  bookings   Booking[]
 
+  @@index([adminId])
   @@map("customers")
+}
+
+model Coupon {
+  id            String    @id @default(uuid()) @db.Uuid
+  adminId       String    @map("admin_id") @db.Uuid
+  admin         User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  code          String    @unique @db.VarChar(50)
+  discountType  String    @map("discount_type") @db.VarChar(20)
+  discountValue Float     @map("discount_value")
+  minOrder      Float?    @map("min_order")
+  isActive      Boolean   @default(true) @map("is_active")
+  validUntil    DateTime? @map("valid_until")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
+
+  @@index([adminId])
+  @@map("coupons")
+}
+
+model Promotion {
+  id          String    @id @default(uuid()) @db.Uuid
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(100)
+  description String?   @db.Text
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime  @map("end_date")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([adminId])
+  @@map("promotions")
+}
+
+model Booking {
+  id          String    @id @default(uuid()) @db.Uuid
+  adminId     String    @map("admin_id") @db.Uuid
+  admin       User      @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  tableId     String    @map("table_id") @db.Uuid
+  table       Table     @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  customerId  String    @map("customer_id") @db.Uuid
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bookingTime DateTime  @map("booking_time")
+  partySize   Int       @map("party_size")
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@index([adminId])
+  @@map("bookings")
 }
 
 model Order {
   id         String      @id @default(uuid()) @db.Uuid
-  orderNo    String      @unique @map("order_no") @db.VarChar(20)
+  adminId    String      @map("admin_id") @db.Uuid
+  admin      User        @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  orderNo    String      @unique @map("order_no") @db.VarChar(50)
   status     OrderStatus @default(PENDING)
-  total      Float
+  subtotal   Float       @default(0)
+  tax        Float       @default(0)
+  total      Float       @default(0)
   tableId    String?     @map("table_id") @db.Uuid
-  table      Table?      @relation(fields: [tableId], references: [id])
+  table      Table?      @relation(fields: [tableId], references: [id], onDelete: SetNull)
   customerId String?     @map("customer_id") @db.Uuid
-  customer   Customer?   @relation(fields: [customerId], references: [id])
-  userId     String?     @map("user_id") @db.Uuid // employee who took the order
-  user       User?       @relation(fields: [userId], references: [id])
+  customer   Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  employeeId String?     @map("employee_id") @db.Uuid
+  employee   Employee?   @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   createdAt  DateTime    @default(now()) @map("created_at")
   updatedAt  DateTime    @updatedAt @map("updated_at")
 
-  items      OrderItem[]
-  payments   Payment[]
+  items          OrderItem[]
+  payments       Payment[]
+  kitchenOrders  KitchenOrder[]
+  receipts       Receipt[]
 
+  @@index([adminId])
   @@index([status])
   @@index([createdAt])
   @@map("orders")
@@ -192,9 +408,11 @@ model OrderItem {
   orderId   String   @map("order_id") @db.Uuid
   order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId String   @map("product_id") @db.Uuid
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
   price     Float
+  tax       Float?   @default(0)
+  lineTotal Float    @map("line_total")
   notes     String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -204,15 +422,42 @@ model OrderItem {
 }
 
 model Payment {
-  id        String   @id @default(uuid()) @db.Uuid
-  orderId   String   @map("order_id") @db.Uuid
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  amount    Float
-  method    String   @db.VarChar(50) // cash, card, upi
-  status    String   @default("completed") // pending, completed, failed
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @map("order_id") @db.Uuid
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount        Float
+  paymentMethod String   @map("payment_method") @db.VarChar(50) // CASH, CARD, UPI
+  status        String   @default("COMPLETED") // PENDING, COMPLETED, FAILED
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
   @@index([orderId])
   @@map("payments")
+}
+
+model Receipt {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receiptNo String   @unique @map("receipt_no") @db.VarChar(50)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@map("receipts")
+}
+
+model KitchenOrder {
+  id        String        @id @default(uuid()) @db.Uuid
+  orderId   String        @map("order_id") @db.Uuid
+  order     Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  adminId   String        @map("admin_id") @db.Uuid
+  admin     User          @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  status    KitchenStatus @default(TO_COOK)
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  @@index([orderId])
+  @@index([adminId])
+  @@index([status])
+  @@map("kitchen_orders")
 }

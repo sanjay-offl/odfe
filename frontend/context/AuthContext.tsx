@@ -2,9 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { supabase } from '../utils/supabaseClient';
-import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import Logo from '@/components/Logo';
+import { getToken, setToken, clearToken } from '@/utils/token';
 
 export interface UserProfile {
   id: string;
@@ -22,22 +21,24 @@ export interface UserProfile {
 
 interface AuthContextType {
   loading: boolean;
-  session: Session | null;
-  user: User | null;
+  user: UserProfile | null;
   profile: UserProfile | null;
   role: string | null;
   isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   loading: true,
-  session: null,
   user: null,
   profile: null,
   role: null,
   isAuthenticated: false,
+  login: async () => ({ success: false }),
+  signup: async () => ({ success: false }),
   logout: async () => {},
   refreshProfile: async () => {},
 });
@@ -53,9 +54,8 @@ function LoadingScreen() {
   );
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-// ─── Cookie helpers ────────────────────────────────────────────────────────────
 function setCookie(name: string, value: string, days = 7) {
   if (typeof document === 'undefined') return;
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
@@ -67,7 +67,6 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
 }
 
-// ─── Role → target route ───────────────────────────────────────────────────────
 function getRoleHome(role: string, dept?: string | null): string {
   if (role === 'ADMIN') return '/dashboard';
   if (role === 'EMPLOYEE') {
@@ -80,7 +79,6 @@ function getRoleHome(role: string, dept?: string | null): string {
   return '/self-order';
 }
 
-// ─── Public / Protected page lists ────────────────────────────────────────────
 const ALWAYS_PUBLIC = ['/', '/login', '/signup', '/forgot-password', '/reset-password'];
 const ALWAYS_PUBLIC_PREFIXES = ['/self-order', '/s/', '/customer-display', '/forbidden'];
 
@@ -100,146 +98,128 @@ const EMPLOYEE_ROUTES: Record<string, string[]> = {
 function isRouteAllowed(pathname: string, role: string, dept?: string | null): boolean {
   if (ALWAYS_PUBLIC.includes(pathname)) return true;
   if (ALWAYS_PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return true;
-
   if (role === 'ADMIN') {
     return ADMIN_ROUTES.some(r => pathname === r || pathname.startsWith(r + '/'));
   }
-
   if (role === 'EMPLOYEE') {
     const d = (dept || 'cashier').toLowerCase();
     const allowed = EMPLOYEE_ROUTES[d] || EMPLOYEE_ROUTES['cashier'];
     return allowed.some(r => pathname === r || pathname.startsWith(r + '/'));
   }
-
   return false;
 }
 
+async function fetchProfile(token: string): Promise<UserProfile | null> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.success && json.data) {
+      const dept = json.data.employeeProfile?.position || null;
+      return {
+        id:         json.data.id,
+        email:      json.data.email,
+        name:       json.data.name || 'User',
+        role:       json.data.role || 'CUSTOMER',
+        cafeName:   json.data.settings?.[0]?.cafeName || 'ODFE Cafe',
+        employeeId: json.data.employeeProfile?.id || null,
+        shift:      json.data.employeeProfile?.shift || null,
+        department: dept,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [session, setSession]   = useState<Session | null>(null);
-  const [user, setUser]         = useState<User | null>(null);
+  const [user, setUser]         = useState<UserProfile | null>(null);
   const [profile, setProfile]   = useState<UserProfile | null>(null);
   const [role, setRole]         = useState<string | null>(null);
   const [loading, setLoading]   = useState(true);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [token, setTokenState]   = useState<string | null>(null);
 
   const router   = useRouter();
   const pathname = usePathname();
   const initDone = useRef(false);
 
-  // ─── Fetch profile from backend ──────────────────────────────────────────────
-  const fetchProfile = async (token: string, currentUser: User): Promise<UserProfile | null> => {
-    try {
-      const res = await fetch(`${API_BASE}/auth/profile`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) return null;
-
-      const json = await res.json();
-      if (json.success && json.data) {
-        const dept = json.data.employeeProfile?.position || null;
-        const p: UserProfile = {
-          id:         json.data.id,
-          email:      json.data.email,
-          name:       json.data.name || currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
-          role:       json.data.role || 'CUSTOMER',
-          cafeName:   json.data.settings?.[0]?.cafeName || 'ODFE Cafe',
-          employeeId: json.data.employeeProfile?.id || null,
-          shift:      json.data.employeeProfile?.shift || null,
-          department: dept,
-        };
-        return p;
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
-  // ─── Persist role info and redirect ──────────────────────────────────────────
-  const applyProfile = useCallback((p: UserProfile, doRedirect: boolean) => {
+  const persistAndRedirect = useCallback((p: UserProfile, doRedirect: boolean) => {
     setProfile(p);
+    setUser(p);
     setRole(p.role);
 
-    // Persist in localStorage
+    setCookie('odfe_role', p.role);
+    if (p.department) setCookie('odfe_dept', p.department);
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('odfe_role', p.role);
       localStorage.setItem('odfe_name', p.name);
       if (p.department) localStorage.setItem('odfe_dept', p.department);
     }
 
-    // Persist in cookies for server-side middleware
-    setCookie('odfe_role', p.role);
-    if (p.department) setCookie('odfe_dept', p.department);
-
     if (!doRedirect) return;
 
-    const isPublicPage = ALWAYS_PUBLIC.includes(pathname);
+    const isAuthPage   = ['/login', '/signup', '/forgot-password', '/reset-password'].includes(pathname);
     const targetHome   = getRoleHome(p.role, p.department);
 
-    if (isPublicPage) {
-      // On landing/login page → go to role home
+    if (isAuthPage) {
       setIsRedirecting(true);
       router.replace(targetHome);
     } else if (!isRouteAllowed(pathname, p.role, p.department)) {
-      // On a page they're not allowed → forbidden
       setIsRedirecting(true);
       router.replace('/forbidden');
     }
   }, [pathname, router]);
 
-  // ─── Refresh profile (called externally) ─────────────────────────────────────
-  const refreshProfile = async () => {
-    if (!user) return;
-    const { data: { session: s } } = await supabase.auth.getSession();
-    if (!s?.access_token) return;
-    const p = await fetchProfile(s.access_token, user);
-    if (p) applyProfile(p, false);
-  };
+  const refreshProfile = useCallback(async () => {
+    const t = getToken();
+    if (!t) return;
+    const p = await fetchProfile(t);
+    if (p) persistAndRedirect(p, false);
+  }, [persistAndRedirect]);
 
-  // ─── Bootstrap on mount ───────────────────────────────────────────────────────
   useEffect(() => {
     if (initDone.current) return;
     initDone.current = true;
 
     const init = async () => {
       setLoading(true);
+      const storedToken = getToken();
 
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-
-      if (currentSession) {
-        setSession(currentSession);
-        setUser(currentSession.user);
-
-        const p = await fetchProfile(currentSession.access_token, currentSession.user);
+      if (storedToken) {
+        setTokenState(storedToken);
+        const p = await fetchProfile(storedToken);
         if (p) {
-          applyProfile(p, true);
+          persistAndRedirect(p, true);
         } else {
-          // Session exists but user not in public.users yet (or profile API down)
-          // Use localStorage cache or user_metadata as fallback
           const cachedRole = typeof window !== 'undefined' ? localStorage.getItem('odfe_role') : null;
           const cachedDept = typeof window !== 'undefined' ? localStorage.getItem('odfe_dept') : null;
-          const metaRole   = currentSession.user.user_metadata?.role as string | undefined;
-
-          const fallbackRole = cachedRole || metaRole || null;
-          if (fallbackRole) {
+          if (cachedRole) {
             const fallbackProfile: UserProfile = {
-              id:         currentSession.user.id,
-              email:      currentSession.user.email || '',
-              name:       currentSession.user.user_metadata?.full_name || 'User',
-              role:       fallbackRole,
+              id: '', email: '',
+              name: localStorage.getItem('odfe_name') || 'User',
+              role: cachedRole,
               department: cachedDept || undefined,
             };
-            applyProfile(fallbackProfile, true);
+            persistAndRedirect(fallbackProfile, true);
           } else {
-            // No role info at all — redirect to login so they can re-authenticate
             setLoading(false);
             router.replace('/login');
             return;
           }
+        }
+      } else {
+        const publicPages = ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/customer-display'];
+        const isPublic = publicPages.includes(pathname) || ALWAYS_PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
+        if (!isPublic) {
+          router.replace('/login');
         }
       }
 
@@ -249,68 +229,107 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     init();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Auth state change listener ───────────────────────────────────────────────
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: AuthChangeEvent, newSession: Session | null) => {
-        if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setRole(null);
-          setIsRedirecting(false);
-
-          deleteCookie('odfe_role');
-          deleteCookie('odfe_dept');
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('odfe_role');
-            localStorage.removeItem('odfe_name');
-            localStorage.removeItem('odfe_dept');
-          }
-
-          const publicPages = ['/', '/login', '/signup', '/forgot-password', '/reset-password', '/customer-display'];
-          if (!publicPages.some(p => pathname === p || pathname.startsWith('/self-order'))) {
-            router.push('/login');
-          }
-          return;
-        }
-
-        if (newSession && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
-          setSession(newSession);
-          setUser(newSession.user);
-
-          // Don't re-fetch profile on TOKEN_REFRESHED if we already have it
-          if (event === 'TOKEN_REFRESHED' && profile) return;
-
-          const p = await fetchProfile(newSession.access_token, newSession.user);
-          if (p) applyProfile(p, true);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [pathname, profile, applyProfile, router]);
-
-  // ─── Stop redirect spinner after navigation completes ─────────────────────────
   useEffect(() => {
     setIsRedirecting(false);
   }, [pathname]);
 
-  // ─── Logout ───────────────────────────────────────────────────────────────────
-  const logout = async () => {
-    setLoading(true);
-    await supabase.auth.signOut();
-    // SIGNED_OUT event handler clears everything
+  const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        return { success: false, message: json.message || 'Registration failed' };
+      }
+
+      return { success: true, message: json.message || 'Registration successful' };
+    } catch (error: any) {
+      return { success: false, message: error.message || 'Network error occurred' };
+    }
   };
 
-  const isAuthenticated = !!session;
+  const login = async (email: string, password: string): Promise<{ success: boolean; message?: string }> => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const json = await res.json();
+
+      if (!json.success) {
+        return { success: false, message: json.message || 'Invalid email or password' };
+      }
+
+      const { accessToken, role: userRole, refreshToken, name } = json.data;
+
+      setToken(accessToken);
+      setTokenState(accessToken);
+      if (refreshToken) {
+        localStorage.setItem('odfe_refresh', refreshToken);
+      }
+
+      const p: UserProfile = {
+        id: json.data.id,
+        email: json.data.email,
+        name: name || email.split('@')[0],
+        role: userRole || 'ADMIN',
+        department: json.data.employeeProfile?.position || undefined,
+      };
+
+      persistAndRedirect(p, true);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, message: err.message || 'Network error. Is the server running?' };
+    }
+  };
+
+  const logout = async () => {
+    const currentToken = token || getToken();
+    if (currentToken) {
+      try {
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentToken}`,
+          },
+        });
+      } catch {}
+    }
+
+    setUser(null);
+    setProfile(null);
+    setRole(null);
+    setTokenState(null);
+    setIsRedirecting(false);
+
+    clearToken();
+    deleteCookie('odfe_role');
+    deleteCookie('odfe_dept');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('odfe_role');
+      localStorage.removeItem('odfe_name');
+      localStorage.removeItem('odfe_dept');
+    }
+
+    router.push('/login');
+  };
+
+  const isAuthenticated = !!token && !!role;
 
   if (loading || isRedirecting) {
     return <LoadingScreen />;
   }
 
   return (
-    <AuthContext.Provider value={{ loading, session, user, profile, role, isAuthenticated, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ loading, user, profile, role, isAuthenticated, login, signup, logout, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

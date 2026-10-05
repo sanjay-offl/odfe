@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: odfe
+  datasource:
+    url: jdbc:h2:mem:odfe;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: sa
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  flyway:
+    enabled: false
+  mail:
+    host: localhost
+    port: 1025
+    username:
+    password:
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:change-me-in-production}
+  expiration-ms: 28800000
+
+odfe:
+  app-name: ODFE
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    org.hibernate.SQL: WARN

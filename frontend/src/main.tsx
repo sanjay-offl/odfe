@@ -8,5 +8,12 @@ import './styles.css';
 
 const client = new QueryClient();
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode><QueryClientProvider client={client}><BrowserRouter><App /></BrowserRouter><Toaster position="top-right" /></QueryClientProvider></React.StrictMode>
+  <React.StrictMode>
+    <QueryClientProvider client={client}>
+      <BrowserRouter>
+        <App />
+        <Toaster position="top-right" toastOptions={{ duration: 1400, style: { borderRadius: '10px', fontSize: '13px' } }} />
+      </BrowserRouter>
+    </QueryClientProvider>
+  </React.StrictMode>
 );

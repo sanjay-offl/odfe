@@ -1,6 +1,6 @@
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { BarChart3, ChefHat, ChevronDown, Grid2X2, LogOut, Menu, Package, Plus, Search, Settings2, ShoppingBag, Users } from 'lucide-react';
+import { BarChart3, Banknote, ChefHat, ChevronDown, CreditCard, Grid2X2, LogOut, Menu, Package, Plus, QrCode, Search, Settings2, ShoppingBag, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { categories, products } from './data';
 import { useAuth, usePos } from './store';
@@ -158,6 +158,11 @@ export function Auth({ signup = false }: { signup?: boolean }) {
 export function Pos() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
+  const [table, setTable] = useState(12);
+  const [showTables, setShowTables] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card / Digital' | 'UPI QR'>('Cash');
+  const [paid, setPaid] = useState(false);
   const add = usePos(s => s.add);
   const cart = usePos(s => s.cart);
   const change = usePos(s => s.change);
@@ -181,8 +186,9 @@ export function Pos() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.18, delay: 0.03 }}
+          onClick={() => setShowTables(true)}
         >
-          <Grid2X2 size={17} /> Table 12 <ChevronDown size={16} />
+          <Grid2X2 size={17} /> Table {table} <ChevronDown size={16} />
         </motion.button>
       </div>
       <div className="pos-grid">
@@ -238,7 +244,7 @@ export function Pos() {
           <div className="cart-head">
             <div>
               <p className="eyebrow">Current order</p>
-              <h2>Table 12</h2>
+              <h2>Table {table}</h2>
             </div>
             <motion.span
               className="count"
@@ -313,7 +319,7 @@ export function Pos() {
                 {money(total)}
               </motion.b>
             </div>
-            <motion.button className="primary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} disabled={!cart.length} onClick={() => toast.success('Order sent to payment')}>
+            <motion.button className="primary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} disabled={!cart.length} onClick={() => setShowPayment(true)}>
               Charge {money(total)} <span>→</span>
             </motion.button>
             <motion.button className="secondary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} style={{ marginTop: 8 }} onClick={() => usePos.getState().clear()} disabled={!cart.length}>
@@ -322,6 +328,33 @@ export function Pos() {
           </div>
         </motion.aside>
       </div>
+      {showTables && (
+        <div className="modal-backdrop" onClick={() => setShowTables(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-head"><div><p className="eyebrow">Floor plan</p><h2>Choose a table</h2></div><button className="icon-btn" onClick={() => setShowTables(false)}><X size={19} /></button></div>
+            <p className="muted">Main floor · available tables</p>
+            <div className="table-grid">
+              {Array.from({ length: 12 }, (_, i) => i + 1).map(number => {
+                const occupied = [3, 7, 12].includes(number);
+                return <button key={number} className={`floor-table ${number === table ? 'selected' : ''} ${occupied ? 'occupied' : ''}`} disabled={occupied} onClick={() => { setTable(number); setShowTables(false); toast.success(`Table ${number} selected`); }}><strong>{number}</strong><span>{occupied ? 'In service' : `${number % 3 + 2} seats`}</span></button>;
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+      {showPayment && (
+        <div className="modal-backdrop" onClick={() => setShowPayment(false)}>
+          <div className="modal payment-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-head"><div><p className="eyebrow">Checkout · Table {table}</p><h2>{paid ? 'Payment complete' : 'Take payment'}</h2></div><button className="icon-btn" onClick={() => setShowPayment(false)}><X size={19} /></button></div>
+            {paid ? <div className="payment-success"><div className="success-mark">✓</div><h3>Order sent to kitchen</h3><p className="muted">Receipt #1048 is ready to print or email.</p><button className="primary full" onClick={() => { setPaid(false); setShowPayment(false); usePos.getState().clear(); }}>New order</button></div> : <>
+              <div className="checkout-total"><span>Amount due</span><strong>{money(total)}</strong></div>
+              <div className="payment-options">{([['Cash', Banknote], ['Card / Digital', CreditCard], ['UPI QR', QrCode]] as const).map(([method, Icon]) => <button key={method} className={paymentMethod === method ? 'payment-option selected' : 'payment-option'} onClick={() => setPaymentMethod(method)}><Icon size={20} /><span>{method}</span></button>)}</div>
+              {paymentMethod === 'UPI QR' && <div className="upi-code"><QrCode size={86} /><div><strong>Scan to pay</strong><span>odfe.cafe@ybl</span></div></div>}
+              <button className="primary full" onClick={() => { setPaid(true); toast.success('Payment recorded'); }}>Confirm {paymentMethod} · {money(total)}</button>
+            </>}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

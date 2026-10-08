@@ -98,7 +98,7 @@ export function MotionShell() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 360, damping: 24 }}
           >
-            O
+            <img src="/light_logo.jpeg" alt="ODFE" />
           </motion.span>
           <motion.span
             initial={{ opacity: 0, x: -4 }}

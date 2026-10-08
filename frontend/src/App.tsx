@@ -1,9 +1,9 @@
-import { Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { BarChart3, ChefHat, ChevronDown, Coffee, Grid2X2, LogOut, Menu, Monitor, Package, Plus, Search, Settings2, ShoppingBag, Users, X } from 'lucide-react';
+import { BarChart3, ChefHat, ChevronDown, Grid2X2, LogOut, Menu, Package, Plus, Search, Settings2, ShoppingBag, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { categories, products } from './data';
-import { useAuth, usePos, roleLabel } from './store';
+import { useAuth, usePos } from './store';
 import { money, readableText } from './utils';
 import type { Product } from './types';
 
@@ -11,7 +11,7 @@ export function Protected() { return useAuth.getState().user ? <Outlet /> : <Nav
 function Shell() {
   const user = useAuth((s) => s.user)!; const logout = useAuth((s) => s.logout); const [open, setOpen] = useState(false);
   const links = user.role === 'ADMIN' ? [['/admin/products', 'Products', Package], ['/admin/categories', 'Categories', Grid2X2], ['/admin/booking', 'Booking', Settings2], ['/admin/users', 'Team', Users], ['/admin/reports', 'Reports', BarChart3], ['/kds', 'Kitchen display', ChefHat]] as const : [['/pos', 'POS terminal', ShoppingBag], ['/kds', 'Kitchen display', ChefHat]] as const;
-  return <div className="app-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><div className="brand"><span className="brand-mark">O</span><span>ODFE<small>cafe operations</small></span></div><nav>{links.map(([to, label, Icon]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={19}/>{label}</NavLink>)}</nav><button className="logout" onClick={() => { logout(); toast.success('See you next time'); }}><LogOut size={18}/>Log out</button></aside><main className="main"><header className="topbar"><button className="icon-btn mobile-menu" onClick={() => setOpen(!open)}><Menu size={22}/></button><div><span className="eyebrow">Good morning, {user.name.split(' ')[0]}</span><h1>{useLocation().pathname.startsWith('/pos') ? 'POS terminal' : 'Workspace'}</h1></div><div className="top-actions"><span className="status-dot"/> <span className="hide-mobile">Online</span><div className="avatar">{user.name[0]}</div></div></header><Outlet /></main></div>;
+  return <div className="app-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><div className="brand"><img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" /><span>ODFE<small>cafe operations</small></span></div><nav>{links.map(([to, label, Icon]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={19}/>{label}</NavLink>)}</nav><button className="logout" onClick={() => { logout(); toast.success('See you next time'); }}><LogOut size={18}/>Log out</button></aside><main className="main"><header className="topbar"><button className="icon-btn mobile-menu" onClick={() => setOpen(!open)}><Menu size={22}/></button><div><span className="eyebrow">Good morning, {user.name.split(' ')[0]}</span><h1>{useLocation().pathname.startsWith('/pos') ? 'POS terminal' : 'Workspace'}</h1></div><div className="top-actions"><span className="status-dot"/> <span className="hide-mobile">Online</span><div className="avatar">{user.name[0]}</div></div></header><Outlet /></main></div>;
 }
 export function Auth({ signup = false }: { signup?: boolean }) {
   const login = useAuth((s) => s.login); const navigate = useNavigate(); const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
@@ -39,7 +39,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 360, damping: 20, delay: 0.05 }}
           >
-            O
+            <img src="/light_logo.jpeg" alt="ODFE" />
           </motion.span>
           <span>
             ODFE<small>cafe operations</small>
@@ -75,7 +75,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
       >
         <div className="mobile-brand brand">
-          <span className="brand-mark">O</span>
+          <img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" />
           <span>
             ODFE<small>cafe operations</small>
           </span>
@@ -134,7 +134,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
               className="primary full"
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.995 }}
-              transition={{ type: 'spring', stiffness: 360, damping: 26, delay: signup ? 0.14 : 0.12 }}
+              transition={{ type: 'spring', stiffness: 360, damping: 26 }}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
             >
@@ -156,15 +156,314 @@ export function Auth({ signup = false }: { signup?: boolean }) {
   );
 }
 export function Pos() {
-  const [query, setQuery] = useState(''); const [category, setCategory] = useState('All'); const add = usePos(s => s.add); const cart = usePos(s => s.cart); const change = usePos(s => s.change);
-  const visible = products.filter(p => (category === 'All' || p.category.name === category) && p.name.toLowerCase().includes(query.toLowerCase())); const subtotal = cart.reduce((a, l) => a + l.product.price * l.quantity, 0);
-  return <section className="pos-page"><div className="pos-toolbar"><div className="search"><Search size={18}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search menu..." /></div><button className="secondary"><Grid2X2 size={17}/> Table 12 <ChevronDown size={16}/></button></div><div className="pos-grid"><div className="menu-area"><div className="category-tabs">{['All', ...categories.map(c => c.name)].map(c => <button key={c} className={category === c ? 'selected' : ''} onClick={() => setCategory(c)}>{c}</button>)}</div><div className="product-grid">{visible.map(p => <button className="product-card" key={p.id} onClick={() => { add(p); toast.success(`${p.name} added`, { id: p.id }); }}><span className="product-accent" style={{ background: p.category.color }}/><div className="product-icon" style={{ background: p.category.color, color: readableText(p.category.color) }}>{p.name[0]}</div><div className="product-info"><strong>{p.name}</strong><span>{p.description}</span><b>{money(p.price)}</b></div><span className="add"><Plus size={18}/></span></button>)}</div></div><aside className="cart"><div className="cart-head"><div><p className="eyebrow">Current order</p><h2>Table 12</h2></div><span className="count">{cart.reduce((a, l) => a + l.quantity, 0)} items</span></div>{cart.length === 0 ? <div className="empty-cart"><ShoppingBag size={30}/><strong>Your order is empty</strong><span>Tap a menu item to get started</span></div> : <div className="cart-lines">{cart.map(l => <div className="cart-line" key={l.product.id}><div><strong>{l.product.name}</strong><span>{money(l.product.price)} each</span></div><div className="qty"><button onClick={() => change(l.product.id, l.quantity - 1)}>−</button><b>{l.quantity}</b><button onClick={() => change(l.product.id, l.quantity + 1)}>+</button></div><strong>{money(l.product.price * l.quantity)}</strong></div>)}</div>}<div className="totals"><div><span>Subtotal</span><b>{money(subtotal)}</b></div><div><span>Tax <small>8.5%</small></span><b>{money(subtotal * .085)}</b></div><div className="total"><strong>Total</strong><strong>{money(subtotal * 1.085)}</strong></div><button className="primary full" disabled={!cart.length} onClick={() => { toast.success('Order sent to payment'); }}>Charge {money(subtotal * 1.085)} <span>→</span></button></div></aside></div></section>;
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState('All');
+  const add = usePos(s => s.add);
+  const cart = usePos(s => s.cart);
+  const change = usePos(s => s.change);
+  const visible = products.filter(
+    p => (category === 'All' || p.category.name === category) && p.name.toLowerCase().includes(query.toLowerCase())
+  );
+  const subtotal = cart.reduce((a, l) => a + l.product.price * l.quantity, 0);
+  const tax = subtotal * 0.085;
+  const total = subtotal + tax;
+  return (
+    <section className="pos-page">
+      <div className="pos-toolbar">
+        <motion.div className="search" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18 }}>
+          <Search size={18} />
+          <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search menu..." />
+        </motion.div>
+        <motion.button
+          className="secondary"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.995 }}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, delay: 0.03 }}
+        >
+          <Grid2X2 size={17} /> Table 12 <ChevronDown size={16} />
+        </motion.button>
+      </div>
+      <div className="pos-grid">
+        <div className="menu-area">
+          <motion.div className="category-tabs" initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.18 }}>
+            {['All', ...categories.map(c => c.name)].map((c, i) => (
+              <motion.button
+                key={c}
+                className={category === c ? 'selected' : ''}
+                onClick={() => setCategory(c)}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 380, damping: 24 }}
+              >
+                {c}
+              </motion.button>
+            ))}
+          </motion.div>
+          <StaggerContainer>
+            <div className="product-grid">
+              {visible.map(p => (
+                <StaggerItem key={p.id}>
+                  <motion.button
+                    className="product-card"
+                    layout
+                    whileHover={{ y: -4, boxShadow: '0 14px 32px rgba(58,31,10,0.16)' }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                    onClick={() => {
+                      add(p);
+                      toast.success(`${p.name} added`, { id: p.id });
+                    }}
+                  >
+                    <span className="product-accent" style={{ background: p.category.color }} />
+                    <motion.div className="product-icon" style={{ background: p.category.color, color: readableText(p.category.color) }} whileHover={{ rotate: 2 }}>
+                      {p.name[0]}
+                    </motion.div>
+                    <div className="product-info">
+                      <strong>{p.name}</strong>
+                      <span>{p.description}</span>
+                      <b>{money(p.price)}</b>
+                    </div>
+                    <motion.span className="add" whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+                      <Plus size={18} />
+                    </motion.span>
+                  </motion.button>
+                </StaggerItem>
+              ))}
+            </div>
+          </StaggerContainer>
+        </div>
+        <motion.aside className="cart" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}>
+          <div className="cart-head">
+            <div>
+              <p className="eyebrow">Current order</p>
+              <h2>Table 12</h2>
+            </div>
+            <motion.span
+              className="count"
+              key={cart.reduce((a, l) => a + l.quantity, 0)}
+              initial={{ scale: 1.1, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 380, damping: 18 }}
+            >
+              {cart.reduce((a, l) => a + l.quantity, 0)} items
+            </motion.span>
+          </div>
+          <AnimatePresence mode="popLayout">
+            {cart.length === 0 ? (
+              <motion.div key="empty" className="empty-cart" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}>
+                <motion.div animate={{ y: [0, -2, 0] }} transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}>
+                  <ShoppingBag size={30} />
+                </motion.div>
+                <strong>Your order is empty</strong>
+                <span>Tap a menu item to get started</span>
+              </motion.div>
+            ) : (
+              <motion.div key="lines" className="cart-lines">
+                <StaggerContainer>
+                  {cart.map(l => (
+                    <StaggerItem key={l.product.id}>
+                      <motion.div
+                        layout
+                        className="cart-line"
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, x: 8, scale: 0.98 }}
+                        whileHover={{ background: '#faf7f2', borderRadius: 10, paddingLeft: 8, paddingRight: 8 }}
+                        transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+                      >
+                        <div>
+                          <strong>{l.product.name}</strong>
+                          <span>{money(l.product.price)} each</span>
+                        </div>
+                        <div className="qty">
+                          <motion.button onClick={() => change(l.product.id, l.quantity - 1)} whileHover={{ background: '#f0e7df' }} whileTap={{ scale: 0.9 }}>
+                            −
+                          </motion.button>
+                          <motion.b key={l.quantity} initial={{ scale: 1.2, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 400, damping: 16 }}>
+                            {l.quantity}
+                          </motion.b>
+                          <motion.button onClick={() => change(l.product.id, l.quantity + 1)} whileHover={{ background: '#f0e7df' }} whileTap={{ scale: 0.9 }}>
+                            +
+                          </motion.button>
+                        </div>
+                        <motion.strong key={l.product.price * l.quantity} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.12 }}>
+                          {money(l.product.price * l.quantity)}
+                        </motion.strong>
+                      </motion.div>
+                    </StaggerItem>
+                  ))}
+                </StaggerContainer>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="totals">
+            <div>
+              <span>Subtotal</span>
+              <b>{money(subtotal)}</b>
+            </div>
+            <div>
+              <span>Tax <small>(8.5%)</small></span>
+              <b>{money(tax)}</b>
+            </div>
+            <div className="total">
+              <span>Total</span>
+              <motion.b key={total} initial={{ scale: 1.05, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 380, damping: 18 }}>
+                {money(total)}
+              </motion.b>
+            </div>
+            <motion.button className="primary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} disabled={!cart.length} onClick={() => toast.success('Order sent to payment')}>
+              Charge {money(total)} <span>→</span>
+            </motion.button>
+            <motion.button className="secondary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} style={{ marginTop: 8 }} onClick={() => usePos.getState().clear()} disabled={!cart.length}>
+              Clear
+            </motion.button>
+          </div>
+        </motion.aside>
+      </div>
+    </section>
+  );
 }
 export function AdminPage({ title, subtitle, kind = 'table' }: { title: string; subtitle: string; kind?: string }) {
   const [search, setSearch] = useState('');
   const categoryRows = categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
   const productRows = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
-  return <section className="content"><div className="page-heading"><div><p className="eyebrow">Manage</p><h2>{title}</h2><p className="muted">{subtitle}</p></div><button className="primary"><Plus size={18}/> Add {title.slice(0, -1)}</button></div><div className="panel"><div className="panel-toolbar"><div className="search"><Search size={18}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Search ${title.toLowerCase()}...`}/></div><span className="result-count">{kind === 'categories' ? categoryRows.length : kind === 'products' ? productRows.length : 0} results</span></div>{kind === 'categories' ? <div className="category-list">{categoryRows.map(c => <div className="category-row" key={c.id}><span className="swatch" style={{ background: c.color }}/><strong>{c.name}</strong><span className="muted">Color {c.color}</span><button className="text-btn">Edit</button></div>)}</div> : kind === 'products' ? <div className="data-table"><div className="tr th"><span>Product</span><span>Category</span><span>Price</span><span>Kitchen</span><span/></div>{productRows.map((p: Product) => <div className="tr" key={p.id}><span className="product-cell"><span className="mini-dot" style={{ background: p.category.color }}/><strong>{p.name}</strong></span><span className="muted">{p.category.name}</span><span className="price">{money(p.price)}</span><span><span className="pill green">{p.sendToKitchen ? 'Yes' : 'No'}</span></span><button className="text-btn">Edit</button></div>)}</div> : <div className="empty-state"><Settings2 size={28}/><strong>{title} is ready to configure</strong><span>Connect this workspace to your cafe settings when you are ready.</span></div>}</div></section>;
+  return (
+    <section className="content">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">Manage</p>
+          <motion.h2
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            {title}
+          </motion.h2>
+          <p className="muted">{subtitle}</p>
+        </div>
+        <motion.button
+          className="primary"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.995 }}
+          transition={{ type: 'spring', stiffness: 360, damping: 26 }}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <Plus size={18} /> Add {title.slice(0, -1)}
+        </motion.button>
+      </div>
+      <motion.div
+        className="panel"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+      >
+        <div className="panel-toolbar">
+          <motion.div
+            className="search"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.16 }}
+          >
+            <Search size={18} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={`Search ${title.toLowerCase()}...`}
+            />
+          </motion.div>
+          <motion.span
+            className="result-count"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.06 }}
+          >
+            {kind === 'categories' ? categoryRows.length : kind === 'products' ? productRows.length : 0} results
+          </motion.span>
+        </div>
+        {kind === 'categories' ? (
+          <div className="category-list">
+            <StaggerContainer>
+              {categoryRows.map(c => (
+                <StaggerItem key={c.id}>
+                  <motion.div
+                    className="category-row"
+                    whileHover={{ background: '#faf7f2', borderRadius: 10, paddingLeft: 8, paddingRight: 8 }}
+                    transition={{ duration: 0.16 }}
+                  >
+                    <span className="swatch" style={{ background: c.color }} />
+                    <strong>{c.name}</strong>
+                    <span className="muted">Color {c.color}</span>
+                    <motion.button className="text-btn" whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+                      Edit
+                    </motion.button>
+                  </motion.div>
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          </div>
+        ) : kind === 'products' ? (
+          <div className="data-table">
+            <div className="tr th">
+              <span>Product</span>
+              <span>Category</span>
+              <span>Price</span>
+              <span>Kitchen</span>
+              <span />
+            </div>
+            <StaggerContainer>
+              {productRows.map((p: Product) => (
+                <StaggerItem key={p.id}>
+                  <motion.div
+                    className="tr"
+                    whileHover={{ background: '#faf7f2', borderRadius: 10, paddingLeft: 12, paddingRight: 12 }}
+                    transition={{ duration: 0.16 }}
+                  >
+                    <span className="product-cell">
+                      <motion.span
+                        className="mini-dot"
+                        style={{ background: p.category.color }}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: 'spring', stiffness: 360, damping: 18 }}
+                      />
+                      <strong>{p.name}</strong>
+                    </span>
+                    <span className="muted">{p.category.name}</span>
+                    <span className="price">{money(p.price)}</span>
+                    <span>
+                      <span className="pill green">{p.sendToKitchen ? 'Yes' : 'No'}</span>
+                    </span>
+                    <motion.button className="text-btn" whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}>
+                      Edit
+                    </motion.button>
+                  </motion.div>
+                </StaggerItem>
+              ))}
+            </StaggerContainer>
+          </div>
+        ) : (
+          <motion.div
+            className="empty-state"
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.16 }}
+          >
+            <motion.div
+              animate={{ y: [0, -2, 0] }}
+              transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
+            >
+              <Settings2 size={28} />
+            </motion.div>
+            <strong>{title} is ready to configure</strong>
+            <span>Connect this workspace to your cafe settings when you are ready.</span>
+          </motion.div>
+        )}
+      </motion.div>
+    </section>
+  );
 }
 import { AnimatePresence, motion } from 'framer-motion';
 import { StaggerContainer, StaggerItem } from './components/ui/Stagger';
@@ -254,7 +553,7 @@ export function Display({ selfOrder = false }) {
     <div className="display-page">
       <div className="display-top">
         <div className="brand light">
-          <span className="brand-mark">O</span>
+          <img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" />
           <span>
             ODFE<small>cafe operations</small>
           </span>

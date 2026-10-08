@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { useLocation, useNavigate, NavLink, Outlet } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { BarChart3, ChefHat, Grid2X2, LogOut, Menu, Package, Settings2, ShoppingBag, Users, X } from 'lucide-react';
+import { BarChart3, ChefHat, CreditCard, Grid2X2, LogOut, Menu, Package, Settings2, ShoppingBag, Tag, Users, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth, roleLabel } from '../../store';
 import { Page } from '../ui/Page';
@@ -55,6 +55,8 @@ export function MotionShell() {
       ? ([
           ['/admin/products', 'Products', Package],
           ['/admin/categories', 'Categories', Grid2X2],
+          ['/admin/payments', 'Payments', CreditCard],
+          ['/admin/promotions', 'Promotions', Tag],
           ['/admin/booking', 'Booking', Settings2],
           ['/admin/users', 'Team', Users],
           ['/admin/reports', 'Reports', BarChart3],

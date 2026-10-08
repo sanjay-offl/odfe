@@ -163,15 +163,22 @@ export function Pos() {
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card / Digital' | 'UPI QR'>('Cash');
   const [paid, setPaid] = useState(false);
+  const [activeOrderId, setActiveOrderId] = useState<string>();
+  const [checkoutTotal, setCheckoutTotal] = useState(0);
   const add = usePos(s => s.add);
   const cart = usePos(s => s.cart);
   const change = usePos(s => s.change);
+  const setDiscount = usePos(s => s.setDiscount);
+  const setCustomer = usePos(s => s.setCustomer);
+  const sendToKitchen = usePos(s => s.sendToKitchen);
+  const customer = usePos(s => s.customer);
+  const discount = usePos(s => s.discount);
   const visible = products.filter(
     p => (category === 'All' || p.category.name === category) && p.name.toLowerCase().includes(query.toLowerCase())
   );
   const subtotal = cart.reduce((a, l) => a + l.product.price * l.quantity, 0);
   const tax = subtotal * 0.085;
-  const total = subtotal + tax;
+  const total = subtotal + tax - discount;
   return (
     <section className="pos-page">
       <div className="pos-toolbar">
@@ -319,7 +326,13 @@ export function Pos() {
                 {money(total)}
               </motion.b>
             </div>
-            <motion.button className="primary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} disabled={!cart.length} onClick={() => setShowPayment(true)}>
+            <div className="cart-actions">
+              <button className="secondary" disabled={!cart.length} onClick={() => { const code = window.prompt('Coupon code'); if (code?.toUpperCase() === 'WELCOME10') { setDiscount(Math.min(subtotal * .1, subtotal)); toast.success('10% coupon applied'); } else if (code) toast.error('Coupon not found'); }}>Discount</button>
+              <button className="secondary" disabled={!cart.length} onClick={() => { const name = window.prompt('Customer name'); if (name) { setCustomer({ id: name.toLowerCase().replace(/\s+/g, '-'), name, email: `${name.toLowerCase().replace(/\s+/g, '.')}@example.com`, phone: '' }); toast.success('Customer assigned'); } }}>Customer</button>
+            </div>
+            {customer && <div className="assigned-customer">Customer: <strong>{customer.name}</strong></div>}
+            {discount > 0 && <div className="discount-line"><span>Coupon discount</span><b>−{money(discount)}</b></div>}
+            <motion.button className="primary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} disabled={!cart.length} onClick={() => { const order = sendToKitchen(table); if (order) { setActiveOrderId(order.id); setCheckoutTotal(order.total); toast.success(`Order #${order.id} sent to kitchen`); setShowPayment(true); } }}>
               Charge {money(total)} <span>→</span>
             </motion.button>
             <motion.button className="secondary full" whileHover={{ y: -1 }} whileTap={{ scale: 0.995 }} transition={{ type: 'spring', stiffness: 360, damping: 26 }} style={{ marginTop: 8 }} onClick={() => usePos.getState().clear()} disabled={!cart.length}>
@@ -346,11 +359,11 @@ export function Pos() {
         <div className="modal-backdrop" onClick={() => setShowPayment(false)}>
           <div className="modal payment-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-head"><div><p className="eyebrow">Checkout · Table {table}</p><h2>{paid ? 'Payment complete' : 'Take payment'}</h2></div><button className="icon-btn" onClick={() => setShowPayment(false)}><X size={19} /></button></div>
-            {paid ? <div className="payment-success"><div className="success-mark">✓</div><h3>Order sent to kitchen</h3><p className="muted">Receipt #1048 is ready to print or email.</p><button className="primary full" onClick={() => { setPaid(false); setShowPayment(false); usePos.getState().clear(); }}>New order</button></div> : <>
-              <div className="checkout-total"><span>Amount due</span><strong>{money(total)}</strong></div>
+            {paid ? <div className="payment-success"><div className="success-mark">✓</div><h3>Payment complete</h3><p className="muted">Receipt #{activeOrderId} is ready to print or email.</p><div className="receipt-actions"><button className="secondary" onClick={() => window.print()}>Print receipt</button><button className="secondary" onClick={() => toast.success('Receipt email sent')}>Email receipt</button></div><button className="primary full" onClick={() => { setPaid(false); setShowPayment(false); setActiveOrderId(undefined); usePos.getState().clear(); }}>New order</button></div> : <>
+              <div className="checkout-total"><span>Amount due</span><strong>{money(checkoutTotal)}</strong></div>
               <div className="payment-options">{([['Cash', Banknote], ['Card / Digital', CreditCard], ['UPI QR', QrCode]] as const).map(([method, Icon]) => <button key={method} className={paymentMethod === method ? 'payment-option selected' : 'payment-option'} onClick={() => setPaymentMethod(method)}><Icon size={20} /><span>{method}</span></button>)}</div>
               {paymentMethod === 'UPI QR' && <div className="upi-code"><QrCode size={86} /><div><strong>Scan to pay</strong><span>odfe.cafe@ybl</span></div></div>}
-              <button className="primary full" onClick={() => { setPaid(true); toast.success('Payment recorded'); }}>Confirm {paymentMethod} · {money(total)}</button>
+              <button className="primary full" onClick={() => { if (activeOrderId) usePos.getState().markPaid(activeOrderId, paymentMethod); setPaid(true); toast.success('Payment recorded'); }}>Confirm {paymentMethod} · {money(checkoutTotal)}</button>
             </>}
           </div>
         </div>
@@ -360,6 +373,7 @@ export function Pos() {
 }
 export function AdminPage({ title, subtitle, kind = 'table' }: { title: string; subtitle: string; kind?: string }) {
   const [search, setSearch] = useState('');
+  const [enabled, setEnabled] = useState<Record<string, boolean>>({ Cash: true, 'Card / Digital': true, 'UPI QR': true, 'Self ordering': false });
   const categoryRows = categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
   const productRows = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
   return (
@@ -477,6 +491,15 @@ export function AdminPage({ title, subtitle, kind = 'table' }: { title: string; 
               ))}
             </StaggerContainer>
           </div>
+        ) : kind === 'payments' || kind === 'promotions' || kind === 'booking' || kind === 'users' ? (
+          <div className="settings-list">
+            {(kind === 'payments' ? [['Cash', 'Accept cash at the counter'], ['Card / Digital', 'Accept cards and bank payments'], ['UPI QR', 'Generate a QR from odfe.cafe@ybl']] : kind === 'promotions' ? [['WELCOME10', '10% off the whole order · Coupon'], ['Morning combo', '15% off orders above $25 · Automatic']] : kind === 'booking' ? [['Main floor', '12 tables · 38 seats'], ['Patio', '6 tables · 20 seats']] : [['Alex Morgan', 'Admin · alex@odfe.cafe'], ['Jamie Lee', 'Cashier · jamie@odfe.cafe']]).map(([label, detail]) => (
+              <div className="settings-row" key={label}><div><strong>{label}</strong><span>{detail}</span></div><button className={enabled[label] === false ? 'toggle' : 'toggle on'} onClick={() => setEnabled(state => ({ ...state, [label]: !state[label] }))}><span /></button></div>
+            ))}
+            <button className="primary" onClick={() => toast.success(`${title} saved`)}><Plus size={17} /> Save changes</button>
+          </div>
+        ) : kind === 'reports' ? (
+          <div className="report-grid"><div className="metric-card"><span>Total orders</span><strong>128</strong><small>+12.4% this week</small></div><div className="metric-card"><span>Revenue</span><strong>$4,862</strong><small>+8.7% this week</small></div><div className="metric-card"><span>Average order</span><strong>$37.98</strong><small>+3.1% this week</small></div><div className="report-bars"><div className="report-title"><strong>Sales trend</strong><span>Today · This week · This month</span></div>{[58, 76, 45, 88, 68, 92, 80].map((height, index) => <div className="bar-wrap" key={index}><div className="bar" style={{ height: `${height}%` }} /><span>{['M','T','W','T','F','S','S'][index]}</span></div>)}</div></div>
         ) : (
           <motion.div
             className="empty-state"
@@ -502,8 +525,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { StaggerContainer, StaggerItem } from './components/ui/Stagger';
 
 export function Kds() {
-  const [stage, setStage] = useState('New');
-  const tickets = [{ id: '1048', table: 'Table 12', time: '2 min ago', items: [{ q: 2, n: 'Cappuccino' }, { q: 1, n: 'Avocado Toast' }] }];
+  const orders = usePos(s => s.orders);
+  const updateOrder = usePos(s => s.updateOrder);
   return (
     <section className="content">
       <div className="page-heading">
@@ -526,7 +549,7 @@ export function Kds() {
         </motion.span>
       </div>
       <div className="kds-columns">
-        {['New', 'Preparing', 'Ready'].map(column => (
+        {(['To Cook', 'Preparing', 'Completed'] as const).map(column => (
           <motion.div
             key={column}
             className="kds-column"
@@ -536,10 +559,10 @@ export function Kds() {
           >
             <div className="column-title">
               <strong>{column}</strong>
-              <span>1</span>
+              <span>{orders.filter(order => order.status === column || (column === 'To Cook' && order.status === 'Paid')).length}</span>
             </div>
             <StaggerContainer>
-              {tickets.map(t => (
+              {orders.filter(order => order.status === column || (column === 'To Cook' && order.status === 'Paid')).map(t => (
                 <StaggerItem key={t.id}>
                   <motion.div
                     layout
@@ -552,23 +575,23 @@ export function Kds() {
                   >
                     <div className="ticket-head">
                       <strong>#{t.id}</strong>
-                      <span>{t.time}</span>
+                      <span>{new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                     <h3>{t.table}</h3>
-                    {t.items.map((it, i) => (
-                      <div className="ticket-item" key={i}>
-                        <b>{it.q}×</b>
-                        <span>{it.n}</span>
+                    {t.lines.map((it) => (
+                      <div className="ticket-item" key={it.product.id}>
+                        <b>{it.quantity}×</b>
+                        <span>{it.product.name}</span>
                       </div>
                     ))}
                     <motion.button
                       className="secondary full"
-                      onClick={() => setStage(column === 'New' ? 'Preparing' : 'Ready')}
+                      onClick={() => updateOrder(t.id, column === 'To Cook' ? 'Preparing' : 'Completed')}
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.995 }}
                       transition={{ type: 'spring', stiffness: 360, damping: 26 }}
                     >
-                      {stage === column ? 'Move to next stage →' : `Mark ${column === 'New' ? 'preparing' : 'ready'}`}
+                      {column === 'Completed' ? 'Completed' : `Move to ${column === 'To Cook' ? 'preparing' : 'completed'} →`}
                     </motion.button>
                   </motion.div>
                 </StaggerItem>
@@ -582,6 +605,19 @@ export function Kds() {
 }
 export function Display({ selfOrder = false }) {
   const [sent, setSent] = useState(false);
+  const [liveOrder, setLiveOrder] = useState<any>(() => {
+    const raw = localStorage.getItem('odfe-customer-display');
+    return raw ? JSON.parse(raw) : undefined;
+  });
+  useEffect(() => {
+    const sync = () => {
+      const raw = localStorage.getItem('odfe-customer-display');
+      setLiveOrder(raw ? JSON.parse(raw) : undefined);
+    };
+    window.addEventListener('storage', sync);
+    const timer = window.setInterval(sync, 1000);
+    return () => { window.removeEventListener('storage', sync); window.clearInterval(timer); };
+  }, []);
   return (
     <div className="display-page">
       <div className="display-top">
@@ -599,7 +635,7 @@ export function Display({ selfOrder = false }) {
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}
       >
-        {sent ? (
+        {sent || liveOrder?.displayStatus === 'complete' ? (
           <AnimatePresence mode="wait">
             <motion.div
               key="sent"
@@ -635,17 +671,17 @@ export function Display({ selfOrder = false }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.22 }}
           >
-            <p className="eyebrow">Welcome to our cafe</p>
+            {liveOrder ? <div className="display-order-card"><p className="eyebrow">Live order #{liveOrder.id} · Table {liveOrder.table}</p><h2>{liveOrder.status}</h2>{liveOrder.lines?.map((line: any) => <div className="display-line" key={line.product.id}><span>{line.quantity}× {line.product.name}</span><b>{money(line.product.price * line.quantity)}</b></div>)}<div className="display-total"><span>Total</span><strong>{money(liveOrder.total)}</strong></div></div> : <p className="eyebrow">Welcome to our cafe</p>}
             <h1>
               Good food.
               <br />
               <em>Good company.</em>
             </h1>
-            <p>
+            {!liveOrder && <p>
               {selfOrder
                 ? 'Browse the menu and order from your table.'
                 : 'Your order number will appear here when it is ready.'}
-            </p>
+            </p>}
             {selfOrder && (
               <motion.button
                 className="primary"

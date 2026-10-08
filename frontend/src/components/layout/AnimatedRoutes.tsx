@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -7,6 +7,19 @@ import { MotionShell } from './MotionShell';
 import { Page } from '../ui/Page';
 
 import { Auth, Pos, Kds, Display, AdminPage, Protected } from '../../App';
+
+function AdminSection() {
+  const { section = 'workspace' } = useParams();
+  const config: Record<string, [string, string, string]> = {
+    booking: ['Booking', 'Manage floor reservations and table availability.', 'booking'],
+    users: ['Team', 'Manage admins, cashiers, and account access.', 'users'],
+    reports: ['Reports', 'Real-time sales insights for your cafe.', 'reports'],
+    payments: ['Payment methods', 'Enable the ways your customers pay.', 'payments'],
+    promotions: ['Coupons & promotions', 'Create discounts that help guests come back.', 'promotions']
+  };
+  const [title, subtitle, kind] = config[section] || ['Workspace', 'Everything your team needs, in one place.', 'workspace'];
+  return <Page><AdminPage title={title} subtitle={subtitle} kind={kind} /></Page>;
+}
 
 export function AnimatedRoutes() {
   const location = useLocation();
@@ -81,17 +94,7 @@ export function AnimatedRoutes() {
                 </Page>
               }
             />
-            <Route
-              path="/admin/:section"
-              element={
-                <Page>
-                  <AdminPage
-                    title="Workspace"
-                    subtitle="Everything your team needs, in one place."
-                  />
-                </Page>
-              }
-            />
+            <Route path="/admin/:section" element={<AdminSection />} />
             <Route
               path="/kds"
               element={

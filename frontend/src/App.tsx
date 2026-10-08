@@ -1,4 +1,4 @@
-import { Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { BarChart3, ChefHat, ChevronDown, Grid2X2, LogOut, Menu, Package, Plus, Search, Settings2, ShoppingBag, Users } from 'lucide-react';
 import toast from 'react-hot-toast';

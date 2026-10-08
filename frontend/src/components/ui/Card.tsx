@@ -4,7 +4,7 @@ import type { PropsWithChildren } from 'react';
 export function Card({ children, className = '' }: PropsWithChildren<{ className?: string }>) {
   return (
     <motion.div
-      className={`bg-white border border-[#eee3d9] rounded-[14px] shadow-[0_7px_25px_rgba(58,31,10,0.05)] ${className}`}
+      className={`glass-card bg-white border border-[#eee3d9] rounded-[14px] shadow-[0_7px_25px_rgba(58,31,10,0.05)] ${className}`}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -2, boxShadow: '0 12px 28px rgba(58,31,10,0.12)' }}

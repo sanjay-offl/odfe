@@ -11,7 +11,7 @@ export function Protected() { return useAuth.getState().user ? <Outlet /> : <Nav
 function Shell() {
   const user = useAuth((s) => s.user)!; const logout = useAuth((s) => s.logout); const [open, setOpen] = useState(false);
   const links = user.role === 'ADMIN' ? [['/admin/products', 'Products', Package], ['/admin/categories', 'Categories', Grid2X2], ['/admin/booking', 'Booking', Settings2], ['/admin/users', 'Team', Users], ['/admin/reports', 'Reports', BarChart3], ['/kds', 'Kitchen display', ChefHat]] as const : [['/pos', 'POS terminal', ShoppingBag], ['/kds', 'Kitchen display', ChefHat]] as const;
-  return <div className="app-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><div className="brand"><span className="brand-mark">O</span><span>ODFE<small>cafe operations</small></span></div><nav>{links.map(([to, label, Icon]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={19}/>{label}</NavLink>)}</nav><button className="logout" onClick={() => { logout(); toast.success('See you next time'); }}><LogOut size={18}/>Log out</button></aside><main className="main"><header className="topbar"><button className="icon-btn mobile-menu" onClick={() => setOpen(!open)}><Menu size={22}/></button><div><span className="eyebrow">Good morning, {user.name.split(' ')[0]}</span><h1>{useLocation().pathname.startsWith('/pos') ? 'POS terminal' : 'Workspace'}</h1></div><div className="top-actions"><span className="status-dot"/> <span className="hide-mobile">Online</span><div className="avatar">{user.name[0]}</div></div></header><Outlet /></main></div>;
+  return <div className="app-shell"><aside className={open ? 'sidebar open' : 'sidebar'}><div className="brand"><img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" /><span>ODFE<small>cafe operations</small></span></div><nav>{links.map(([to, label, Icon]) => <NavLink key={to} to={to} onClick={() => setOpen(false)} className={({ isActive }) => isActive ? 'active' : ''}><Icon size={19}/>{label}</NavLink>)}</nav><button className="logout" onClick={() => { logout(); toast.success('See you next time'); }}><LogOut size={18}/>Log out</button></aside><main className="main"><header className="topbar"><button className="icon-btn mobile-menu" onClick={() => setOpen(!open)}><Menu size={22}/></button><div><span className="eyebrow">Good morning, {user.name.split(' ')[0]}</span><h1>{useLocation().pathname.startsWith('/pos') ? 'POS terminal' : 'Workspace'}</h1></div><div className="top-actions"><span className="status-dot"/> <span className="hide-mobile">Online</span><div className="avatar">{user.name[0]}</div></div></header><Outlet /></main></div>;
 }
 export function Auth({ signup = false }: { signup?: boolean }) {
   const login = useAuth((s) => s.login); const navigate = useNavigate(); const [name, setName] = useState(''); const [email, setEmail] = useState(''); const [password, setPassword] = useState('');
@@ -39,7 +39,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 360, damping: 20, delay: 0.05 }}
           >
-            O
+            <img src="/light_logo.jpeg" alt="ODFE" />
           </motion.span>
           <span>
             ODFE<small>cafe operations</small>
@@ -75,7 +75,7 @@ export function Auth({ signup = false }: { signup?: boolean }) {
         transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
       >
         <div className="mobile-brand brand">
-          <span className="brand-mark">O</span>
+          <img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" />
           <span>
             ODFE<small>cafe operations</small>
           </span>
@@ -553,7 +553,7 @@ export function Display({ selfOrder = false }) {
     <div className="display-page">
       <div className="display-top">
         <div className="brand light">
-          <span className="brand-mark">O</span>
+          <img className="brand-logo" src="/light_logo.jpeg" alt="ODFE" />
           <span>
             ODFE<small>cafe operations</small>
           </span>

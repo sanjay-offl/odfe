@@ -91,6 +91,30 @@ button { cursor: pointer; border: 0; background: none; }
   background: linear-gradient(160deg, rgba(43, 27, 20, 0.98), rgba(60, 38, 28, 0.94));
 }
 
+.dashboard-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dashboard-particle {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: rgba(255, 232, 190, 0.75);
+  box-shadow: 0 0 10px rgba(232, 176, 75, 0.65);
+  animation: dashboard-particle-float 8s ease-in-out infinite;
+}
+
+@keyframes dashboard-particle-float {
+  0% { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.7); }
+  35% { opacity: 0.65; }
+  55% { opacity: 0.85; transform: translate3d(10px, -12px, 0) scale(1); }
+  100% { opacity: 0; transform: translate3d(-5px, -26px, 0) scale(0.7); }
+}
+
 /* Print: only the receipt */
 @media print {
   body * { visibility: hidden !important; }
@@ -101,4 +125,5 @@ button { cursor: pointer; border: 0; background: none; }
 
 @media (prefers-reduced-motion: reduce) {
   * { scroll-behavior: auto !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  .dashboard-particle { animation: none; opacity: 0.3; }
 }

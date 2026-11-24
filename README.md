@@ -22,6 +22,39 @@ The cafe POS currently runs in demo mode. Its service layer uses seeded data and
 browser storage; the Vite development server proxies `/api` and `/ws` requests to
 the backend at `http://localhost:8080`.
 
+### File tree
+
+```text
+.
+├── backend/
+│   ├── pom.xml
+│   └── src/main/
+│       ├── java/com/odfe/
+│       │   ├── auth/
+│       │   └── common/
+│       └── resources/application.yml
+├── frontend/
+│   ├── package.json
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       │   ├── layout/
+│       │   ├── pos/
+│       │   └── ui/
+│       ├── data/
+│       ├── hooks/
+│       ├── lib/
+│       ├── pages/
+│       ├── services/
+│       ├── store/
+│       ├── App.tsx
+│       └── main.tsx
+├── public/                 # Assets for the root Next.js starter
+├── src/app/                # Root Next.js starter pages and styles
+├── package.json            # Root Next.js starter scripts
+└── README.md
+```
+
 ## Requirements
 
 - Node.js and npm to run the frontend

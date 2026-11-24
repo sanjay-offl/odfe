@@ -28,10 +28,9 @@ export function ReportsPage() {
 
   const { data, loading, error, reload } = useAsyncData(() => getReport(range), [range, orders.length]);
 
-  const summary = data?.summary;
   const netRevenue = useMemo(() => {
     if (!data) return 0;
-    return Math.max(0, data.summary.todaySales - data.discounts - data.refunds);
+    return Math.max(0, data.summary.rangeSales - data.discounts - data.refunds);
   }, [data]);
 
   const exportCsv = () => {
@@ -42,10 +41,10 @@ export function ReportsPage() {
       ['Generated', new Date().toISOString()],
       [],
       ['Metric', 'Value'],
-      ['Gross sales', data.summary.todaySales],
-      ['Orders', data.summary.todayOrders],
+      ['Gross sales', data.summary.rangeSales],
+      ['Orders', data.summary.rangeOrders],
       ['Average order value', data.summary.averageOrderValue],
-      ['Pending orders', data.summary.pendingOrders],
+      ['Pending orders', data.summary.rangePendingOrders],
       ['Discounts', data.discounts],
       ['Refunds', data.refunds],
       [],
@@ -83,7 +82,7 @@ export function ReportsPage() {
 
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <SegmentedControl value={range} onChange={setRange} options={RANGES} />
-        {data && <span className="text-xs font-semibold text-muted">{data.rangeLabel} · {number(data.summary.todayOrders)} orders</span>}
+        {data && <span className="text-xs font-semibold text-muted">{data.rangeLabel} · {number(data.summary.rangeOrders)} orders</span>}
       </div>
 
       {!canView && <p className="mb-4 rounded-xl bg-[#fdf1dc] px-4 py-3 text-sm text-[#9a6b1f]">Your role has read-only visibility into reports.</p>}
@@ -94,11 +93,11 @@ export function ReportsPage() {
       {data && !loading && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <StatCard label="Gross sales" value={money(data.summary.todaySales)} hint={`${data.rangeLabel} · paid only`} icon={<IndianRupee size={18} />} tone="caramel" />
+            <StatCard label="Gross sales" value={money(data.summary.rangeSales)} hint={`${data.rangeLabel} · before discounts`} icon={<IndianRupee size={18} />} tone="caramel" />
             <StatCard label="Net revenue" value={money(netRevenue)} hint="After discounts & refunds" icon={<TrendingUp size={18} />} tone="sage" />
-            <StatCard label="Orders" value={number(data.summary.todayOrders)} hint={data.rangeLabel} icon={<ReceiptText size={18} />} tone="blue" />
+            <StatCard label="Orders" value={number(data.summary.rangeOrders)} hint={data.rangeLabel} icon={<ReceiptText size={18} />} tone="blue" />
             <StatCard label="Average order value" value={money(data.summary.averageOrderValue)} hint="Per paid order" icon={<BarChart3 size={18} />} tone="default" />
-            <StatCard label="Discounts given" value={money(data.discounts)} hint={percent((data.summary.todaySales ? (data.discounts / data.summary.todaySales) * 100 : 0), 1)} icon={<Percent size={18} />} tone="brick" />
+            <StatCard label="Discounts given" value={money(data.discounts)} hint={percent((data.summary.rangeSales ? (data.discounts / data.summary.rangeSales) * 100 : 0), 1)} icon={<Percent size={18} />} tone="brick" />
             <StatCard label="Refunds" value={money(data.refunds)} hint="Returned to guests" icon={<RotateCcw size={18} />} tone={data.refunds ? 'brick' : 'sage'} />
           </div>
 
@@ -109,7 +108,7 @@ export function ReportsPage() {
                   <p className="eyebrow">Sales trend</p>
                   <h3 className="text-lg font-semibold">Revenue · {data.rangeLabel}</h3>
                 </div>
-                <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-semibold text-muted">{money(data.summary.todaySales)}</span>
+                <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-semibold text-muted">{money(data.summary.rangeSales)}</span>
               </div>
               <LineChart data={data.salesOverTime} />
             </div>

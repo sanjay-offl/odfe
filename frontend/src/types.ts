@@ -242,6 +242,12 @@ export interface DashboardSummary {
   todayOrders: number;
   averageOrderValue: number;
   pendingOrders: number;
+  /** Gross sales for the selected report range, before discounts and refunds. */
+  rangeSales: number;
+  /** All orders created in the selected report range. */
+  rangeOrders: number;
+  /** Orders still new or preparing in the selected report range. */
+  rangePendingOrders: number;
   bestSeller?: { name: string; quantity: number };
   lowStockCount: number;
 }

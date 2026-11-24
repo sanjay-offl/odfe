@@ -649,6 +649,13 @@ export const getReport = (range: ReportRange = 'today') =>
     const todaySales = roundMoney(paidOrders(allOrders, 'today').reduce((s, o) => s + o.totals.total, 0));
     const avg = paid.length ? roundMoney(paid.reduce((s, o) => s + o.totals.total, 0) / paid.length) : 0;
 
+    // Gross sales include settled orders (paid or later refunded) before discounts.
+    // Net revenue is then gross - discounts - refunds.
+    const settled = allOrders.filter(
+      (o) => (o.paymentStatus === 'PAID' || o.paymentStatus === 'REFUNDED') && inRange(o.createdAt, range),
+    );
+    const rangeSales = roundMoney(settled.reduce((s, o) => s + o.totals.total + o.totals.discount, 0));
+
     // Best sellers within range.
     const sellerMap = new Map<string, { productId: string; name: string; quantity: number; revenue: number }>();
     paid.forEach((o) =>
@@ -661,7 +668,16 @@ export const getReport = (range: ReportRange = 'today') =>
     );
     const bestSellers = [...sellerMap.values()].sort((a, b) => b.quantity - a.quantity);
 
-    // Sales over time (last 7 days trend, or hourly for today).
+    const salesBetween = (start: Date, end: Date) => roundMoney(
+      paid
+        .filter((o) => {
+          const t = new Date(o.createdAt);
+          return t >= start && t < end;
+        })
+        .reduce((s, o) => s + o.totals.total, 0),
+    );
+
+    // Sales over time: hourly for today, daily for week/month, monthly for year.
     const salesOverTime: SalesPoint[] = [];
     if (range === 'today') {
       for (let h = 7; h <= 22; h++) {
@@ -670,25 +686,38 @@ export const getReport = (range: ReportRange = 'today') =>
         );
         salesOverTime.push({ label: `${h % 12 === 0 ? 12 : h % 12}${h < 12 ? 'a' : 'p'}`, value });
       }
-    } else {
-      const days = range === 'week' ? 7 : 14;
-      for (let i = days - 1; i >= 0; i--) {
+    } else if (range === 'week') {
+      for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         d.setHours(0, 0, 0, 0);
         const next = new Date(d);
         next.setDate(next.getDate() + 1);
-        const value = roundMoney(
-          paid.filter((o) => { const t = new Date(o.createdAt); return t >= d && t < next; }).reduce((s, o) => s + o.totals.total, 0),
-        );
-        salesOverTime.push({ label: d.toLocaleDateString('en-IN', { weekday: 'short' }), value });
+        salesOverTime.push({ label: d.toLocaleDateString('en-IN', { weekday: 'short' }), value: salesBetween(d, next) });
+      }
+    } else if (range === 'month') {
+      const end = new Date();
+      end.setHours(0, 0, 0, 0);
+      const start = new Date(end);
+      start.setDate(1);
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const next = new Date(d);
+        next.setDate(next.getDate() + 1);
+        salesOverTime.push({ label: String(d.getDate()), value: salesBetween(d, next) });
+      }
+    } else {
+      const now = new Date();
+      for (let m = 0; m <= now.getMonth(); m++) {
+        const start = new Date(now.getFullYear(), m, 1);
+        const next = new Date(now.getFullYear(), m + 1, 1);
+        salesOverTime.push({ label: start.toLocaleDateString('en-IN', { month: 'short' }), value: salesBetween(start, next) });
       }
     }
 
-    // Orders by hour (today).
+    // Orders by hour of day for the selected range.
     const ordersByHour: SalesPoint[] = [];
     for (let h = 7; h <= 22; h++) {
-      ordersByHour.push({ label: `${h}:00`, value: todays.filter((o) => new Date(o.createdAt).getHours() === h).length });
+      ordersByHour.push({ label: `${h}:00`, value: rangeOrders.filter((o) => new Date(o.createdAt).getHours() === h).length });
     }
 
     // Sales by category.
@@ -713,8 +742,8 @@ export const getReport = (range: ReportRange = 'today') =>
     const statusOrder: PrepStatus[] = ['NEW', 'PREPARING', 'READY', 'COMPLETED', 'CANCELLED'];
     const orderStatus = statusOrder.map((s) => ({ label: s.charAt(0) + s.slice(1).toLowerCase(), value: rangeOrders.filter((o) => o.prepStatus === s).length }));
 
-    const discounts = roundMoney(rangeOrders.reduce((s, o) => s + o.totals.discount, 0));
-    const refunds = roundMoney(allOrders.filter((o) => o.paymentStatus === 'REFUNDED' && inRange(o.createdAt, range)).reduce((s, o) => s + o.totals.total, 0));
+    const discounts = roundMoney(settled.reduce((s, o) => s + o.totals.discount, 0));
+    const refunds = roundMoney(settled.filter((o) => o.paymentStatus === 'REFUNDED').reduce((s, o) => s + o.totals.total, 0));
 
     const lowStockCount = db.ingredients.filter((i) => i.quantity <= i.minThreshold).length;
     const bestSeller = bestSellers[0] ? { name: bestSellers[0].name, quantity: bestSellers[0].quantity } : undefined;
@@ -728,6 +757,9 @@ export const getReport = (range: ReportRange = 'today') =>
         todayOrders: todays.length,
         averageOrderValue: avg,
         pendingOrders: todays.filter((o) => o.prepStatus === 'NEW' || o.prepStatus === 'PREPARING').length,
+        rangeSales,
+        rangeOrders: rangeOrders.length,
+        rangePendingOrders: rangeOrders.filter((o) => o.prepStatus === 'NEW' || o.prepStatus === 'PREPARING').length,
         bestSeller,
         lowStockCount,
       },

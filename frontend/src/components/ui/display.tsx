@@ -4,12 +4,26 @@ import type { PaymentStatus, PrepStatus } from '../../types';
 import { Badge } from './primitives';
 import { CATEGORY_FALLBACK } from '../../data/images';
 
+const DASHBOARD_PARTICLES = [
+  { x: '6%', y: '76%', size: '3px', delay: '-1s', duration: '7s' },
+  { x: '13%', y: '28%', size: '2px', delay: '-4s', duration: '8s' },
+  { x: '23%', y: '66%', size: '4px', delay: '-2s', duration: '9s' },
+  { x: '34%', y: '21%', size: '2px', delay: '-6s', duration: '8s' },
+  { x: '43%', y: '78%', size: '3px', delay: '-3s', duration: '10s' },
+  { x: '54%', y: '34%', size: '4px', delay: '-7s', duration: '9s' },
+  { x: '63%', y: '72%', size: '2px', delay: '-2s', duration: '7s' },
+  { x: '72%', y: '24%', size: '3px', delay: '-5s', duration: '10s' },
+  { x: '82%', y: '61%', size: '4px', delay: '-1s', duration: '8s' },
+  { x: '94%', y: '32%', size: '2px', delay: '-6s', duration: '9s' },
+] as const;
+
 export function PageHeader({
   eyebrow,
   title,
   description,
   actions,
   image,
+  particleOverlay = false,
 }: {
   eyebrow?: string;
   title: string;
@@ -17,13 +31,32 @@ export function PageHeader({
   actions?: ReactNode;
   /** Optional hero image; when provided the header renders as a banner over the image. */
   image?: string;
+  particleOverlay?: boolean;
 }) {
   if (image) {
     return (
-      <div className="relative mb-6 overflow-hidden rounded-2xl bg-espresso text-white shadow-card">
+      <div className="relative isolate mb-6 overflow-hidden rounded-2xl bg-espresso text-white shadow-card">
         <img src={image} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-55" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-espresso via-espresso/90 to-espresso/30" />
-        <div className="relative flex flex-col gap-4 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8">
+        {particleOverlay && (
+          <div className="dashboard-particles" aria-hidden="true">
+            {DASHBOARD_PARTICLES.map((particle, index) => (
+              <span
+                key={index}
+                className="dashboard-particle"
+                style={{
+                  left: particle.x,
+                  top: particle.y,
+                  width: particle.size,
+                  height: particle.size,
+                  animationDelay: particle.delay,
+                  animationDuration: particle.duration,
+                }}
+              />
+            ))}
+          </div>
+        )}
+        <div className="relative z-10 flex flex-col gap-4 p-6 sm:flex-row sm:items-end sm:justify-between sm:p-8">
           <div>
             {eyebrow && <p className="eyebrow mb-1.5 text-white/60">{eyebrow}</p>}
             <h1 className="text-2xl font-semibold sm:text-3xl">{title}</h1>

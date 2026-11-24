@@ -49,6 +49,7 @@ export function DashboardPage() {
         title="Operations dashboard"
         description={services ? 'Live sales, kitchen activity and stock health for today.' : 'Kitchen and order activity for today.'}
         image={HERO_IMAGE}
+        particleOverlay
         actions={
           <>
             {services && <Button variant="secondary" icon={<BarChart3 size={16} />} onClick={() => navigate('/reports')}>Reports</Button>}
